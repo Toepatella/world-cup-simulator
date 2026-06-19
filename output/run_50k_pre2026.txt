@@ -1,0 +1,139 @@
+Calibrated sup_scale = 0.0058 (Elo-expectancy match RMSE = 0.0097)
+
+2026 FIFA World Cup - group-stage advancement probabilities
+Monte Carlo: 50,000 simulated tournaments | Elo->Poisson model | mu=2.75, sup_scale=0.0058, host_adv=+70 Elo
+Tiebreakers: FIFA 2026 (head-to-head first) | snapshot 2026-06-18
+
+=== Group A ========================================================
+Team                      Elo Pld Pts  GD     1st   2nd   3rd  best3    ADV
+Mexico                   1881   2   6  +3   94.8%  5.2%    0%     0%   100%
+South Korea              1786   2   3  +0    5.2% 85.1%  8.8%   6.5%  96.9%
+Czech Republic           1712   2   1  -1      0%  2.2% 69.5%   9.8%  12.0%
+South Africa             1511   2   1  -2      0%  7.4% 21.8%   1.0%   8.4%
+
+=== Group B ========================================================
+Team                      Elo Pld Pts  GD     1st   2nd   3rd  best3    ADV
+Canada                   1767   2   4  +6   59.3% 40.7% <0.1%  <0.1%   100%
+Switzerland              1865   2   4  +3   40.7% 57.8%  1.5%   1.5%   100%
+Bosnia and Herzegovina   1616   2   1  -3      0%  1.6% 80.9%  58.6%  60.2%
+Qatar                    1447   2   1  -6      0%    0% 17.6%  17.4%  17.4%
+
+=== Group C ========================================================
+Team                      Elo Pld Pts  GD     1st   2nd   3rd  best3    ADV
+Brazil                   1978   1   1  +0   55.3% 30.6% 13.5%  12.3%  98.2%
+Morocco                  1840   1   1  +0   25.2% 39.6% 31.2%  26.8%  91.7%
+Scotland                 1794   1   3  +1   19.5% 29.4% 50.1%  40.0%  88.8%
+Haiti                    1536   1   0  -1   <0.1%  0.3%  5.2%   3.3%   3.7%
+
+=== Group D ========================================================
+Team                      Elo Pld Pts  GD     1st   2nd   3rd  best3    ADV
+United States            1780   1   3  +3   51.2% 31.4% 15.9%  14.9%  97.5%
+Australia                1839   1   3  +2   42.7% 39.8% 15.2%  13.8%  96.2%
+Turkey                   1849   1   0  -2    4.4% 18.8% 43.0%  30.9%  54.0%
+Paraguay                 1780   1   0  -3    1.8% 10.1% 26.0%  18.4%  30.2%
+
+=== Group E ========================================================
+Team                      Elo Pld Pts  GD     1st   2nd   3rd  best3    ADV
+Germany                  1939   1   3  +6   73.2% 16.6% 10.3%  10.2%  99.9%
+Ivory Coast              1743   1   3  +1   23.8% 56.3% 19.7%  18.6%  98.7%
+Ecuador                  1890   1   0  -1    3.0% 26.9% 68.4%  59.6%  89.5%
+Curacao                  1427   1   0  -6   <0.1%  0.2%  1.6%   0.5%   0.8%
+
+=== Group F ========================================================
+Team                      Elo Pld Pts  GD     1st   2nd   3rd  best3    ADV
+Netherlands              1944   1   1  +0   45.7% 36.2% 16.7%  14.9%  96.8%
+Sweden                   1755   1   3  +4   17.8% 23.7% 57.9%  55.0%  96.5%
+Japan                    1910   1   1  +0   36.4% 39.9% 21.4%  18.9%  95.2%
+Tunisia                  1585   1   0  -4    0.1%  0.3%  4.0%   2.1%   2.5%
+
+=== Group G ========================================================
+Team                      Elo Pld Pts  GD     1st   2nd   3rd  best3    ADV
+Belgium                  1879   1   1  +0   56.0% 26.8% 12.6%  10.2%  93.1%
+Egypt                    1711   1   1  +0   20.1% 35.5% 25.6%  19.5%  75.1%
+Iran                     1756   1   1  +0   19.6% 25.7% 35.8%  17.1%  62.4%
+New Zealand              1578   1   1  +0    4.3% 12.1% 26.0%  13.7%  30.0%
+
+=== Group H ========================================================
+Team                      Elo Pld Pts  GD     1st   2nd   3rd  best3    ADV
+Spain                    2129   1   1  +0   80.4% 15.4%  3.8%   3.2%  99.0%
+Uruguay                  1870   1   1  +0   15.1% 46.6% 28.6%  17.3%  79.1%
+Cape Verde               1606   1   1  +0    2.8% 23.8% 33.5%  22.0%  48.5%
+Saudi Arabia             1598   1   1  +0    1.7% 14.2% 34.2%  22.7%  38.6%
+
+=== Group I ========================================================
+Team                      Elo Pld Pts  GD     1st   2nd   3rd  best3    ADV
+France                   2084   1   3  +2   76.4% 22.5%  1.1%   1.0%   100%
+Norway                   1929   1   3  +3   22.6% 55.1% 22.1%  20.3%  98.1%
+Senegal                  1839   1   0  -2    1.0% 22.1% 67.2%  46.1%  69.1%
+Iraq                     1592   1   0  -3   <0.1%  0.3%  9.6%   3.8%   4.1%
+
+=== Group J ========================================================
+Team                      Elo Pld Pts  GD     1st   2nd   3rd  best3    ADV
+Argentina                2128   1   3  +3   90.6%  9.2%  0.2%   0.2%   100%
+Austria                  1857   1   3  +2    9.2% 70.2% 20.0%  15.5%  94.8%
+Algeria                  1759   1   0  -3    0.2% 19.3% 51.7%  27.8%  47.4%
+Jordan                   1653   1   0  -2   <0.1%  1.3% 28.1%  11.5%  12.8%
+
+=== Group K ========================================================
+Team                      Elo Pld Pts  GD     1st   2nd   3rd  best3    ADV
+Colombia                 1998   1   3  +2   69.6% 25.9%  4.2%   3.9%  99.5%
+Portugal                 1967   1   1  +0   27.6% 50.2% 17.3%  10.1%  87.9%
+DR Congo                 1674   1   1  +0    2.2% 14.3% 43.1%  25.8%  42.3%
+Uzbekistan               1698   1   0  -2    0.6%  9.6% 35.4%  22.0%  32.2%
+
+=== Group L ========================================================
+Team                      Elo Pld Pts  GD     1st   2nd   3rd  best3    ADV
+England                  2055   1   3  +2   98.2%  1.6%  0.1%   0.1%   100%
+Croatia                  1881   1   0  -2    1.3% 80.9% 12.9%   8.1%  90.3%
+Ghana                    1557   1   3  +1    0.4% 13.5% 76.2%  36.6%  50.5%
+Panama                   1683   1   0  -1   <0.1%  4.0% 10.8%   6.3%  10.4%
+
+=== Best-third race (P advance | finished 3rd) ======================
+Team                      P(3rd)  P(adv as 3rd)  P(adv|3rd)
+Ecuador                    68.4%          59.6%       87.1%
+Bosnia and Herzegovina     80.9%          58.6%       72.5%
+Sweden                     57.9%          55.0%       94.9%
+Senegal                    67.2%          46.1%       68.6%
+Scotland                   50.1%          40.0%       79.7%
+Ghana                      76.2%          36.6%       48.1%
+Turkey                     43.0%          30.9%       71.9%
+Algeria                    51.7%          27.8%       53.8%
+Morocco                    31.2%          26.8%       86.0%
+DR Congo                   43.1%          25.8%       59.9%
+Saudi Arabia               34.2%          22.7%       66.4%
+Uzbekistan                 35.4%          22.0%       62.3%
+Cape Verde                 33.5%          22.0%       65.7%
+Norway                     22.1%          20.3%       91.7%
+Egypt                      25.6%          19.5%       76.2%
+Japan                      21.4%          18.9%       88.4%
+Ivory Coast                19.7%          18.6%       94.4%
+Paraguay                   26.0%          18.4%       70.7%
+Qatar                      17.6%          17.4%       99.0%
+Uruguay                    28.6%          17.3%       60.6%
+Iran                       35.8%          17.1%       47.9%
+Austria                    20.0%          15.5%       77.3%
+Netherlands                16.7%          14.9%       89.5%
+United States              15.9%          14.9%       93.9%
+Australia                  15.2%          13.8%       90.8%
+New Zealand                26.0%          13.7%       52.7%
+Brazil                     13.5%          12.3%       91.0%
+Jordan                     28.1%          11.5%       41.0%
+Belgium                    12.6%          10.2%       81.2%
+Germany                    10.3%          10.2%       99.1%
+Portugal                   17.3%          10.1%       58.3%
+Czech Republic             69.5%           9.8%       14.1%
+Croatia                    12.9%           8.1%       62.5%
+South Korea                 8.8%           6.5%       74.5%
+Panama                     10.8%           6.3%       58.3%
+Colombia                    4.2%           3.9%       94.0%
+Iraq                        9.6%           3.8%       39.8%
+Haiti                       5.2%           3.3%       63.8%
+Spain                       3.8%           3.2%       84.8%
+Tunisia                     4.0%           2.1%       53.7%
+Switzerland                 1.5%           1.5%        100%
+France                      1.1%           1.0%       99.4%
+South Africa               21.8%           1.0%        4.5%
+Curacao                     1.6%           0.5%       33.7%
+
+Wrote C:\Users\tonyt\OneDrive\Documents\world-cup-simulator\output\group_probabilities.csv
+Wrote C:\Users\tonyt\OneDrive\Documents\world-cup-simulator\output\group_probabilities.md
