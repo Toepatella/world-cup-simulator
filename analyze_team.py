@@ -18,7 +18,7 @@ import bracket
 from model import calibrate_sup_scale
 from simulate import build_remaining
 
-TEAM = "France"
+TEAM = "Canada"
 ITERS = 60000
 SEED = 2026
 MU = 2.75
@@ -160,7 +160,7 @@ def main():
                     reach_given[team_pos][r] += 1
 
     def pct(n, d):
-        return f"{100*n/d:5.1f}%" if d else "   -  "
+        return f"{100*n/d:6.2f}%" if d else "    -  "
 
     print(f"\n{team} — best-path analysis ({ITERS:,} sims, host +{HOST:.0f} group / "
           f"+{KO_HOST:.0f} KO)\n")
