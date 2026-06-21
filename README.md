@@ -6,10 +6,6 @@ the remaining group-stage fixtures *and the full knockout bracket* many times.
 Matches already played (as of the snapshot date) are treated as **fixed**; only
 the unplayed group fixtures and the entire knockout are simulated.
 
-**Snapshot date: 2026-06-18.** At that point Groups A and B had played 2 of 3
-rounds; Groups C–L had played 1 of 3. 28 of 72 group matches were complete; 44
-remained to be simulated.
-
 ---
 
 ## 1. Tournament format (confirmed)
