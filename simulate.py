@@ -168,7 +168,7 @@ def fmt_pct(x):
         return "0.0%"
     if x < 0.001:
         return "<0.1%"
-    return f"{100 * x:.1f}%"
+    return f"{100 * x:.2f}%"
 
 
 def _prow(t, cells, widths):

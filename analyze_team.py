@@ -196,7 +196,7 @@ def main():
             print(f"  (no {rnd} appearances)")
             continue
         for o, c in opp[rnd].most_common(6):
-            print(f"  {o:<24}{100*c/tot:5.1f}% of {rnd}s   "
+            print(f"  {o:<24}{100*c/tot:5.2f}% of {rnd}s   "
                   f"{team} wins {pct(beat[rnd][o], c)}")
 
 
