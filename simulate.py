@@ -161,13 +161,13 @@ TEAMW = 24  # column width for team names (widest: "Bosnia and Herzegovina" = 22
 
 
 def fmt_pct(x):
-    """One-decimal %, so right-justified columns align on the decimal and %."""
+    """Two-decimal %, so right-justified columns align on the decimal and %."""
     if x >= 0.9995:
-        return "100.0%"
+        return "100.00%"
     if x <= 0.0:
-        return "0.0%"
-    if x < 0.001:
-        return "<0.1%"
+        return "0.00%"
+    if x < 0.0001:
+        return "<0.01%"
     return f"{100 * x:.2f}%"
 
 
