@@ -15,7 +15,9 @@ of 32. Run:  python simulate.py  [--iters N] [--seed S] [--no-h2h-first] ...
 
 import argparse
 import csv
+import datetime
 import os
+import re
 
 import numpy as np
 
@@ -149,6 +151,10 @@ def current_standings():
     return out
 
 
+def _snapshot_date():
+    return datetime.date.today().isoformat()
+
+
 # ---------------------------------------------------------------- reporting
 
 TEAMW = 24  # column width for team names (widest: "Bosnia and Herzegovina" = 22)
@@ -185,10 +191,11 @@ def print_report(res, iters, mu, sup_scale, host_adv):
              + "".join(f"{c:>{w}}" for c, w in zip(gcols, gw)))
     banner = "=" * len(ghead)
 
+    snapshot_date = _snapshot_date()
     print("\n" + banner)
     print("2026 FIFA WORLD CUP  -  MONTE CARLO TOURNAMENT PROBABILITIES")
     print(f"{iters:,} sims | Elo->Poisson (mu={mu}, sup_scale={sup_scale:.4f}, "
-          f"host +{host_adv:.0f}) | FIFA-2026 tiebreakers | snapshot 2026-06-18")
+          f"host +{host_adv:.0f}) | FIFA-2026 tiebreakers | snapshot {snapshot_date}")
     print(banner)
     print("\nGROUP STAGE   probability of finishing 1st / 2nd / 3rd, qualifying "
           "as a best third, and advancing")
@@ -257,11 +264,12 @@ def print_report(res, iters, mu, sup_scale, host_adv):
 
 def _write_markdown(res, stand, iters, mu, sup_scale, host_adv):
     path = os.path.join(OUT_DIR, "group_probabilities.md")
+    snapshot_date = _snapshot_date()
     lines = [
         "# 2026 FIFA World Cup - group-stage advancement probabilities", "",
         f"- Simulations: **{iters:,}** | Model: World Football Elo -> independent "
         f"Poisson | mu={mu}, sup_scale={sup_scale:.4f}, host advantage=+{host_adv:.0f} Elo",
-        f"- Tiebreakers: FIFA 2026 (head-to-head first). Snapshot: 2026-06-18.",
+        f"- Tiebreakers: FIFA 2026 (head-to-head first). Snapshot: {snapshot_date}.",
         "- ADV = P(1st) + P(2nd) + P(qualify as one of the 8 best third-placed teams).",
         "",
     ]
@@ -312,6 +320,96 @@ def _write_markdown(res, stand, iters, mu, sup_scale, host_adv):
     print(f"Wrote {path}")
 
 
+def _update_readme_sources(content, snapshot_date):
+    pattern = re.compile(
+        r"\| Group composition, played scores, remaining fixtures \| .*? \| \d{4}-\d{2}-\d{2} \|",
+        re.S
+    )
+    replacement = (
+        f"| Group composition, played scores, remaining fixtures | "
+        f"Wikipedia per-group pages (\"2026 FIFA World Cup Group A … L\"), "
+        f"cross-checked vs [NBC](https://www.nbcsports.com/soccer/news/2026-world-cup-group-stage-table-full-standings-for-all-12-groups) / "
+        f"[ESPN](https://www.espn.com/soccer/story/_/id/48939282/) and live [GitHub openfootball/worldcup.json]"
+        f"(https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json) | {snapshot_date} |"
+    )
+    return pattern.sub(replacement, content, count=1)
+
+
+def _update_readme_snapshot(content, snapshot_date):
+    return re.sub(
+        r"\*\*Snapshot date: .*?\*\*\.",
+        f"**Snapshot date: {snapshot_date}.**",
+        content,
+        count=1
+    )
+
+
+def _format_readme_headline(res, stand, iters, snapshot_date):
+    lines = []
+    lines.append(f"## 9. Headline results ({iters:,} simulations)")
+    lines.append("")
+    lines.append("### Title odds — probability of reaching each knockout round (and winning)")
+    lines.append("Sorted by championship %. `R32` = reach the knockout stage at all.")
+    lines.append("")
+    lines.append("| Team | R32 | R16 | QF | SF | Final | **Win** |")
+    lines.append("|---|--:|--:|--:|--:|--:|--:|")
+    for t in sorted(data.all_teams(), key=lambda x: res["champ"][x], reverse=True):
+        if res["r16"][t] < 0.005 and res["champ"][t] == 0:
+            continue
+        lines.append(
+            f"| {t} | {fmt_pct(res['adv'][t])} | {fmt_pct(res['r16'][t])} | "
+            f"{fmt_pct(res['qf'][t])} | {fmt_pct(res['sf'][t])} | "
+            f"{fmt_pct(res['final'][t])} | **{fmt_pct(res['champ'][t])}** |"
+        )
+    lines.append("")
+    lines.append("*(All 48 teams, including the long shots, are in the CSV. Remaining sides each sit below ~0.7% to win.)*")
+    lines.append("")
+    lines.append("### Group-stage advancement")
+    lines.append("`ADV` = P(1st) + P(2nd) + P(qualify as one of the 8 best thirds). Sorted by ADV.")
+    lines.append("Full machine-readable table: [`output/group_probabilities.csv`](output/group_probabilities.csv).")
+    lines.append("")
+    for g, members in data.GROUPS.items():
+        lines.append(f"### Group {g}")
+        lines.append("| Team | Elo | Pld | Pts | GD | 1st | 2nd | 3rd | Best-3 | **Advance** |")
+        lines.append("|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|")
+        order = sorted(members, key=lambda t: res["adv"][t], reverse=True)
+        for t in order:
+            s = stand[g][t]
+            lines.append(
+                f"| {t} | {ratings.ELO[t]} | {s['pld']} | {s['pts']} | {s['gd']:+d} | "
+                f"{fmt_pct(res['p1'][t])} | {fmt_pct(res['p2'][t])} | {fmt_pct(res['p3'][t])} | "
+                f"{fmt_pct(res['pq3'][t])} | **{fmt_pct(res['adv'][t])}** |"
+            )
+        lines.append("")
+    lines.append(
+        f"*Probabilities are Monte Carlo estimates ({iters:,} sims); Monte Carlo standard "
+        f"error is ≈0.2pp or less. Numbers reflect the model and the {snapshot_date} snapshot, "
+        f"not a claim about real-world certainty.*"
+    )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _update_readme(res, stand, iters, mu, sup_scale, host_adv):
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "README.md")
+    snapshot_date = datetime.date.today().isoformat()
+
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    content = _update_readme_snapshot(content, snapshot_date)
+    content = _update_readme_sources(content, snapshot_date)
+
+    marker = "## 9. Headline results"
+    if marker not in content:
+        raise RuntimeError("Could not find README headline results section to update")
+    content = content[:content.index(marker)] + _format_readme_headline(res, stand, iters, snapshot_date)
+
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content)
+    print(f"Updated {path}")
+
+
 def main():
     ap = argparse.ArgumentParser(description="2026 World Cup group-stage Monte Carlo")
     ap.add_argument("--iters", type=int, default=50000)
@@ -350,6 +448,7 @@ def main():
     res = simulate(args.iters, args.seed, args.mu, sup_scale, args.host_adv,
                    args.ko_host_adv)
     print_report(res, args.iters, args.mu, sup_scale, args.host_adv)
+    _update_readme(res, current_standings(), args.iters, args.mu, sup_scale, args.host_adv)
 
 
 if __name__ == "__main__":
