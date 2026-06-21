@@ -14,6 +14,9 @@ Naming: ASCII canonical names are used as the single key across all modules
 "DR Congo", "Bosnia and Herzegovina", "United States", "Turkey".
 """
 
+import json
+import urllib.request
+
 # group letter -> the four teams
 GROUPS = {
     "A": ["Mexico", "South Korea", "South Africa", "Czech Republic"],
@@ -170,6 +173,106 @@ def _sanity_check():
         assert len(members) == 4, f"group {g} does not have 4 teams"
         assert pairs == got, f"group {g} fixtures != round-robin: {pairs ^ got}"
     return True
+
+
+REMOTE_JSON_URL = "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json"
+REMOTE_JSON_USER_AGENT = "world-cup-simulator/1.0"
+
+
+TEAM_ALIAS_MAP = {
+    "USA": "United States",
+    "Bosnia & Herzegovina": "Bosnia and Herzegovina",
+    "Curaçao": "Curacao",
+    "Cura�ao": "Curacao",
+}
+
+
+def _normalize_team_name(name):
+    if not isinstance(name, str):
+        return name
+    name = name.strip()
+    if name in TEAM_ALIAS_MAP:
+        return TEAM_ALIAS_MAP[name]
+    # support some common formatting variants
+    if name.lower() == "usa":
+        return "United States"
+    if name.lower().replace("&", "and").replace("  ", " ") == "bosnia and herzegovina":
+        return "Bosnia and Herzegovina"
+    if "cura" in name.lower():
+        return "Curacao"
+    return name
+
+
+def _parse_remote_match(obj):
+    group = obj.get("group")
+    if not group:
+        return None
+    group = group.strip()
+    if group.lower().startswith("group "):
+        group = group.split(None, 1)[1]
+    if group not in GROUPS:
+        return None
+
+    team1 = _normalize_team_name(obj.get("team1"))
+    team2 = _normalize_team_name(obj.get("team2"))
+    if not team1 or not team2:
+        return None
+
+    score = obj.get("score") or {}
+    ft = score.get("ft")
+    if (isinstance(ft, list) and len(ft) >= 2 and
+            ft[0] is not None and ft[1] is not None):
+        try:
+            home_goals = int(ft[0])
+            away_goals = int(ft[1])
+        except (TypeError, ValueError):
+            home_goals = away_goals = None
+    else:
+        home_goals = away_goals = None
+
+    if team1 not in GROUPS[group] or team2 not in GROUPS[group]:
+        return None
+
+    return (group, team1, team2, home_goals, away_goals)
+
+
+def fetch_latest_matches(timeout=15):
+    """Fetch the latest group-stage match results from the public worldcup.json file."""
+    req = urllib.request.Request(
+        REMOTE_JSON_URL,
+        headers={"User-Agent": REMOTE_JSON_USER_AGENT,
+                 "Accept": "application/json"}
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        data = json.load(resp)
+
+    matches = []
+    for entry in data.get("matches", []):
+        parsed = _parse_remote_match(entry)
+        if parsed is not None:
+            matches.append(parsed)
+
+    if not matches:
+        raise ValueError("No valid group-stage matches were found in the remote dataset")
+
+    matches.sort(key=lambda m: (m[0], m[1], m[2]))
+    return matches
+
+
+def refresh_matches(timeout=15, verbose=True):
+    """Update MATCHES from the remote worldcup.json dataset if available."""
+    try:
+        latest = fetch_latest_matches(timeout=timeout)
+        global MATCHES
+        if latest != MATCHES:
+            if verbose:
+                print(f"Fetched latest group-stage data from {REMOTE_JSON_URL}")
+            MATCHES = latest
+        return latest
+    except Exception as exc:
+        if verbose:
+            print("Warning: unable to refresh live match data:", exc)
+        return None
 
 
 if __name__ == "__main__":

@@ -58,6 +58,7 @@ def play_trace(winners, runners, thirds_team, third_assignment, win_fn):
 
 
 def main():
+    data.refresh_matches()
     sup, _ = calibrate_sup_scale(MU)
     rem, la, lb = build_remaining(MU, sup, HOST)
     n_rem = len(rem)

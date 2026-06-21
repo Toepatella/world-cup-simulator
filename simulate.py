@@ -265,30 +265,47 @@ def _write_markdown(res, stand, iters, mu, sup_scale, host_adv):
         "- ADV = P(1st) + P(2nd) + P(qualify as one of the 8 best third-placed teams).",
         "",
     ]
+
+    gcols = ["1st", "2nd", "3rd", "Best3", "Advance"]
+    gw = [9, 9, 9, 9, 10]
+    ghead = (f"{'Team':<{TEAMW}}{'Elo':>6}{'Pld':>5}{'Pts':>5}{'GD':>5}"
+             + "".join(f"{c:>{w}}" for c, w in zip(gcols, gw)))
+    banner = "=" * len(ghead)
+
     for g, members in data.GROUPS.items():
         order = sorted(members, key=lambda t: res["adv"][t], reverse=True)
-        lines += [f"## Group {g}", "",
-                  "| Team | Elo | Pld | Pts | GD | 1st | 2nd | 3rd | Best-3 | **Advance** |",
-                  "|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
+        lines += [f"## Group {g}", "", "```text", ghead, banner]
         for t in order:
             s = stand[g][t]
-            lines.append(
-                f"| {t} | {ratings.ELO[t]} | {s['pld']} | {s['pts']} | {s['gd']:+d} | "
-                f"{fmt_pct(res['p1'][t])} | {fmt_pct(res['p2'][t])} | {fmt_pct(res['p3'][t])} | "
-                f"{fmt_pct(res['pq3'][t])} | **{fmt_pct(res['adv'][t])}** |")
-        lines.append("")
+            lines.append(_prow(t, [ratings.ELO[t], s["pld"], s["pts"], s["gd"],
+                                   fmt_pct(res["p1"][t]), fmt_pct(res["p2"][t]),
+                                   fmt_pct(res["p3"][t]), fmt_pct(res["pq3"][t]),
+                                   fmt_pct(res["adv"][t])],
+                                  [6, 5, 5, 5] + gw))
+        lines += ["```", ""]
 
-    lines += ["## Knockout-stage odds (sorted by title %)", "",
-              "| Team | Reach R32 | R16 | QF | SF | Final | **Win** |",
-              "|---|--:|--:|--:|--:|--:|--:|"]
+    lines += ["## Best-third race (8 of the 12 third-placed teams advance)", "", "```text"]
+    bhead = f"{'Team':<{TEAMW}}{'P(3rd)':>10}{'Adv as 3rd':>12}{'P(adv|3rd)':>12}"
+    lines += [bhead, "-" * len(bhead)]
+    for t in sorted(data.all_teams(), key=lambda t: res["pq3"][t], reverse=True):
+        if res["p3"][t] < 0.005 and res["pq3"][t] < 0.005:
+            continue
+        cond = res["pq3"][t] / res["p3"][t] if res["p3"][t] > 0 else 0.0
+        lines.append(_prow(t, [fmt_pct(res["p3"][t]), fmt_pct(res["pq3"][t]),
+                               fmt_pct(cond)], [10, 12, 12]))
+    lines += ["```", ""]
+
+    lines += ["## Knockout-stage odds (sorted by title %)", "", "```text"]
+    kcols = ["R32", "R16", "QF", "SF", "Final", "WIN"]
+    kw = [9, 9, 9, 9, 9, 9]
+    khead = f"{'Team':<{TEAMW}}" + "".join(f"{c:>{w}}" for c, w in zip(kcols, kw))
+    lines += [khead, "-" * len(khead)]
     for t in sorted(data.all_teams(), key=lambda x: res["champ"][x], reverse=True):
         if res["r16"][t] < 0.005 and res["champ"][t] == 0:
             continue
-        lines.append(
-            f"| {t} | {fmt_pct(res['adv'][t])} | {fmt_pct(res['r16'][t])} | "
-            f"{fmt_pct(res['qf'][t])} | {fmt_pct(res['sf'][t])} | "
-            f"{fmt_pct(res['final'][t])} | **{fmt_pct(res['champ'][t])}** |")
-    lines.append("")
+        cells = [fmt_pct(res[k][t]) for k in ("adv", "r16", "qf", "sf", "final", "champ")]
+        lines.append(_prow(t, cells, kw))
+    lines += ["```", ""]
 
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
@@ -311,6 +328,7 @@ def main():
     ap.add_argument("--show-calibration", action="store_true")
     args = ap.parse_args()
 
+    data.refresh_matches()
     data._sanity_check()
     ratings.check_complete(data.all_teams())
     if args.no_h2h_first:
