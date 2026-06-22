@@ -5,7 +5,7 @@ from the **Round of 32** all the way to **lifting the trophy** — by simulating
 the remaining group-stage fixtures *and the full knockout bracket* many times.
 Matches already played (as of the snapshot date) are treated as **fixed**; only
 the unplayed group fixtures and the entire knockout are simulated.
-s
+
 ---
 
 ## 1. Tournament format (confirmed)
