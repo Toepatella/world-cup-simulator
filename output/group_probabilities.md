@@ -1,7 +1,7 @@
 # 2026 FIFA World Cup - group-stage advancement probabilities
 
 - Simulations: **50,000** | Model: World Football Elo -> independent Poisson | mu=2.75, sup_scale=0.0058, host advantage=+70 Elo
-- Tiebreakers: FIFA 2026 (head-to-head first). Snapshot: 2026-06-21.
+- Tiebreakers: FIFA 2026 (head-to-head first). Snapshot: 2026-06-22.
 - ADV = P(1st) + P(2nd) + P(qualify as one of the 8 best third-placed teams).
 
 ## Group A

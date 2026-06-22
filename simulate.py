@@ -346,7 +346,7 @@ def _update_readme_snapshot(content, snapshot_date):
 
 def _format_readme_headline(res, stand, iters, snapshot_date):
     lines = []
-    lines.append(f"## 9. Headline results ({iters:,} simulations)")
+    lines.append(f"## Headline results ({iters:,} simulations)")
     lines.append("")
     lines.append("### Title odds — probability of reaching each knockout round (and winning)")
     lines.append("Sorted by championship %. `R32` = reach the knockout stage at all.")
@@ -400,10 +400,28 @@ def _update_readme(res, stand, iters, mu, sup_scale, host_adv):
     content = _update_readme_snapshot(content, snapshot_date)
     content = _update_readme_sources(content, snapshot_date)
 
-    marker = "## 9. Headline results"
-    if marker not in content:
+    marker_re = re.compile(r"^##\s*(?:\d+\.\s*)?Headline results.*$", re.M)
+    m = marker_re.search(content)
+    if not m:
         raise RuntimeError("Could not find README headline results section to update")
-    content = content[:content.index(marker)] + _format_readme_headline(res, stand, iters, snapshot_date)
+    content = content[:m.start()]
+
+    hr_match = re.search(r"^---\s*$", content, re.M)
+    if not hr_match:
+        raise RuntimeError("Could not find README top section separator to insert headline results")
+    insert_idx = content.find("\n", hr_match.end())
+    if insert_idx == -1:
+        insert_idx = len(content)
+    else:
+        insert_idx += 1
+
+    content = (
+        content[:insert_idx]
+        + "\n"
+        + _format_readme_headline(res, stand, iters, snapshot_date)
+        + "\n"
+        + content[insert_idx:]
+    )
 
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
