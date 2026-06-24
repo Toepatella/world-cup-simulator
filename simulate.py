@@ -264,6 +264,15 @@ def current_standings():
     return out
 
 
+def _standings_order(members, tbl):
+    """Sort a group by actual current standing (points, then GD, then goals
+    scored) -- the same ordering as a real league table, not by the model's
+    advancement probability."""
+    return sorted(members,
+                  key=lambda t: (tbl[t]["pts"], tbl[t]["gd"], tbl[t]["gf"]),
+                  reverse=True)
+
+
 def _snapshot_date():
     return datetime.date.today().isoformat()
 
@@ -535,7 +544,7 @@ def print_report(res, iters, mu, sup_scale, host_adv):
 
     for g, members in data.GROUPS.items():
         tbl = stand[g]
-        order = sorted(members, key=lambda t: res["adv"][t], reverse=True)
+        order = _standings_order(members, tbl)
         print(f"\nGroup {g}")
         print(ghead)
         print("-" * len(ghead))
@@ -630,7 +639,7 @@ def _write_markdown(res, stand, iters, mu, sup_scale, host_adv):
     banner = "=" * len(ghead)
 
     for g, members in data.GROUPS.items():
-        order = sorted(members, key=lambda t: res["adv"][t], reverse=True)
+        order = _standings_order(members, stand[g])
         lines += [f"## Group {g}", "", "```text", ghead, banner]
         for t in order:
             s = stand[g][t]
@@ -726,7 +735,7 @@ def _format_readme_headline(res, stand, iters, snapshot_date):
         lines.append(f"### Group {g}")
         lines.append("| Team | Elo | Pld | Pts | GD | 1st | 2nd | 3rd | Best-3 | **Advance** |")
         lines.append("|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|")
-        order = sorted(members, key=lambda t: res["adv"][t], reverse=True)
+        order = _standings_order(members, stand[g])
         for t in order:
             s = stand[g][t]
             lines.append(

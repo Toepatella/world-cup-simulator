@@ -19,6 +19,7 @@ the unplayed group fixtures and the entire knockout are simulated.
 
 
 
+
 ## Headline results (2,000 simulations)
 
 ### Title odds — probability of reaching each knockout round (and winning)
@@ -178,8 +179,8 @@ Full machine-readable table: [`output/group_probabilities.csv`](output/group_pro
 ### Group B
 | Team | Elo | Pld | Pts | GD | 1st | 2nd | 3rd | Best-3 | **Advance** |
 |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
-| Canada | 1767 | 3 | 4 | +5 | 0.00% | 100.00% | 0.00% | 0.00% | **100.00%** |
 | Switzerland | 1865 | 3 | 7 | +4 | 100.00% | 0.00% | 0.00% | 0.00% | **100.00%** |
+| Canada | 1767 | 3 | 4 | +5 | 0.00% | 100.00% | 0.00% | 0.00% | **100.00%** |
 | Bosnia and Herzegovina | 1616 | 3 | 4 | -1 | 0.00% | 0.00% | 100.00% | 100.00% | **100.00%** |
 | Qatar | 1447 | 3 | 1 | -8 | 0.00% | 0.00% | 0.00% | 0.00% | **0.00%** |
 
@@ -219,17 +220,17 @@ Full machine-readable table: [`output/group_probabilities.csv`](output/group_pro
 | Team | Elo | Pld | Pts | GD | 1st | 2nd | 3rd | Best-3 | **Advance** |
 |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
 | Egypt | 1711 | 2 | 4 | +2 | 47.55% | 18.15% | 34.30% | 34.30% | **100.00%** |
-| Belgium | 1879 | 2 | 2 | +0 | 27.15% | 56.00% | 10.65% | 9.55% | **92.70%** |
 | Iran | 1756 | 2 | 2 | +0 | 25.30% | 21.55% | 50.40% | 24.95% | **71.80%** |
+| Belgium | 1879 | 2 | 2 | +0 | 27.15% | 56.00% | 10.65% | 9.55% | **92.70%** |
 | New Zealand | 1578 | 2 | 1 | -2 | 0.00% | 4.30% | 4.65% | 2.95% | **7.25%** |
 
 ### Group H
 | Team | Elo | Pld | Pts | GD | 1st | 2nd | 3rd | Best-3 | **Advance** |
 |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
 | Spain | 2129 | 2 | 4 | +4 | 90.95% | 5.70% | 3.35% | 3.35% | **100.00%** |
+| Uruguay | 1870 | 2 | 2 | +0 | 7.55% | 5.10% | 72.95% | 16.45% | **29.10%** |
 | Cape Verde | 1606 | 2 | 2 | +0 | 1.50% | 55.20% | 19.10% | 6.35% | **63.05%** |
 | Saudi Arabia | 1598 | 2 | 1 | -4 | 0.00% | 34.00% | 4.60% | 3.30% | **37.30%** |
-| Uruguay | 1870 | 2 | 2 | +0 | 7.55% | 5.10% | 72.95% | 16.45% | **29.10%** |
 
 ### Group I
 | Team | Elo | Pld | Pts | GD | 1st | 2nd | 3rd | Best-3 | **Advance** |
