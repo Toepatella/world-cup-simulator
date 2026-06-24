@@ -332,40 +332,52 @@ def _deterministic_bracket(res):
 
     ko_host_adv = res["bracket"].get("ko_host_adv", 0.0)
 
-    def win_fn(a, b):
+    def elo_win_prob(a, b):
         ea = ratings.ELO[a] + (ko_host_adv if a in data.HOSTS else 0.0)
         eb = ratings.ELO[b] + (ko_host_adv if b in data.HOSTS else 0.0)
-        p = 1.0 / (1.0 + 10.0 ** (-(ea - eb) / 400.0))
+        return 1.0 / (1.0 + 10.0 ** (-(ea - eb) / 400.0))
+
+    def win_fn(a, b):
+        p = elo_win_prob(a, b)
         return (a, b) if p >= 0.5 else (b, a)
 
     parts, winner_of, loser_of = bracket.play_bracket_with_matches(
         winners, runners, thirds, third_assignment, win_fn)
-    return parts, winner_of, loser_of
+
+    win_pct = {}
+    for no, (home, away) in parts.items():
+        p_home = elo_win_prob(home, away)
+        win_pct[no] = {home: p_home, away: 1.0 - p_home}
+
+    return parts, winner_of, loser_of, win_pct
 
 
-def _ascii_match(parts, winner_of, no, indent):
+def _ascii_match(parts, winner_of, win_pct, no, indent):
     home, away = parts[no]
     winner = winner_of[no]
     pad = "  " * indent
+    namew = 22 - 2 * indent
     lines = [f"{pad}[{no}] {_stage_label(no)}"]
     for t in (home, away):
         mark = ">" if t == winner else " "
-        lines.append(f"{pad} {mark} {_short_team(t)}")
+        pct = fmt_pct(win_pct[no][t])
+        lines.append(f"{pad} {mark} {_short_team(t, max(namew, 8)):<{max(namew, 8)}} {pct:>7}")
     return lines
 
 
-def _ascii_round16_block(parts, winner_of, r32a, r32b, r16):
+def _ascii_round16_block(parts, winner_of, win_pct, r32a, r32b, r16):
     lines = []
-    lines += _ascii_match(parts, winner_of, r32a, 0)
-    lines += _ascii_match(parts, winner_of, r32b, 0)
-    lines += _ascii_match(parts, winner_of, r16, 1)
+    lines += _ascii_match(parts, winner_of, win_pct, r32a, 0)
+    lines += _ascii_match(parts, winner_of, win_pct, r32b, 0)
+    lines += _ascii_match(parts, winner_of, win_pct, r16, 1)
     return lines
 
 
 def _format_bracket_ascii(res):
-    """Deterministic ASCII knockout bracket: every match shows who's favored
-    to advance ('>'), and that team is the one carried into the next round."""
-    parts, winner_of, loser_of = _deterministic_bracket(res)
+    """Deterministic ASCII knockout bracket: every match shows each team's
+    Elo-model win probability, and the favorite ('>') is the one carried
+    into the next round."""
+    parts, winner_of, loser_of, win_pct = _deterministic_bracket(res)
 
     # (R32 feeders, R16, QF) groups, two groups per semifinal
     quarters = [
@@ -378,19 +390,19 @@ def _format_bracket_ascii(res):
     lines = ["## Knockout bracket (most-likely-winner path)", "", "```text"]
     sf_groups = [[], []]
     for (g1, g2, qf, sf) in quarters:
-        block = _ascii_round16_block(parts, winner_of, g1[0], g1[1], g1[2])
-        block += _ascii_round16_block(parts, winner_of, g2[0], g2[1], g2[2])
-        block += _ascii_match(parts, winner_of, qf, 2)
+        block = _ascii_round16_block(parts, winner_of, win_pct, g1[0], g1[1], g1[2])
+        block += _ascii_round16_block(parts, winner_of, win_pct, g2[0], g2[1], g2[2])
+        block += _ascii_match(parts, winner_of, win_pct, qf, 2)
         sf_groups[0 if sf == 101 else 1].extend(block)
 
     for half, sf_no in zip(sf_groups, (101, 102)):
         lines += half
-        lines += _ascii_match(parts, winner_of, sf_no, 3)
+        lines += _ascii_match(parts, winner_of, win_pct, sf_no, 3)
         lines.append("")
 
-    lines += _ascii_match(parts, winner_of, bracket.FINAL_NO, 4)
+    lines += _ascii_match(parts, winner_of, win_pct, bracket.FINAL_NO, 4)
     lines.append("")
-    lines += _ascii_match(parts, winner_of, bracket.THIRD_PLACE_NO, 0)
+    lines += _ascii_match(parts, winner_of, win_pct, bracket.THIRD_PLACE_NO, 0)
     lines.append("")
     lines.append(f"Champion: {winner_of[bracket.FINAL_NO]}")
     lines.append("```")
