@@ -307,7 +307,7 @@ def _top_n(counter, n=3):
 def _short_team(team, max_len=20):
     if len(team) <= max_len:
         return team
-    return team[: max_len - 1] + "…"
+    return team[: max_len - 1] + "."
 
 
 def _deterministic_bracket(res):
@@ -354,61 +354,107 @@ def _deterministic_bracket(res):
 
 _BOX_NAMEW = 16
 _BOX_WIDTH = _BOX_NAMEW + 1 + 7 + 2  # marker+space+name+space+pct, padded
+_GAP = 4  # spaces between a match box and the box it feeds into
 
 
-def _ascii_match(parts, winner_of, win_pct, no, indent):
+def _box_lines(parts, winner_of, win_pct, no):
+    """A single match as a 5-line box: stage label, then a bordered card with
+    both teams and their Elo win probabilities; '>' marks who advances."""
     home, away = parts[no]
     winner = winner_of[no]
-    pad = "  " * indent
-    lines = [f"{pad}{_stage_label(no)}",
-             f"{pad}+" + "-" * _BOX_WIDTH + "+"]
+    border = "+" + "-" * _BOX_WIDTH + "+"
+    rows = []
     for t in (home, away):
         mark = ">" if t == winner else " "
         pct = fmt_pct(win_pct[no][t])
         row = f"{mark} {_short_team(t, _BOX_NAMEW):<{_BOX_NAMEW}} {pct:>7}"
-        lines.append(f"{pad}|{row:<{_BOX_WIDTH}}|")
-    lines.append(f"{pad}+" + "-" * _BOX_WIDTH + "+")
-    return lines
+        rows.append(f"|{row:<{_BOX_WIDTH}}|")
+    return [_stage_label(no), border, rows[0], rows[1], border]
 
 
-def _ascii_round16_block(parts, winner_of, win_pct, r32a, r32b, r16):
-    lines = []
-    lines += _ascii_match(parts, winner_of, win_pct, r32a, 0)
-    lines += _ascii_match(parts, winner_of, win_pct, r32b, 0)
-    lines += _ascii_match(parts, winner_of, win_pct, r16, 1)
-    return lines
+def _leaf(parts, winner_of, win_pct, no):
+    lines = _box_lines(parts, winner_of, win_pct, no)
+    width = max(len(l) for l in lines)
+    return {"lines": [l.ljust(width) for l in lines], "width": width, "anchor": len(lines) // 2}
+
+
+def _hmerge(top, bottom, parent_lines):
+    """Stack `top` above `bottom` (no gap) and attach `parent_lines` to the
+    right, vertically centered on the midpoint between the two children's
+    anchors -- the standard way a bracket box centers over its two feeders."""
+    width = max(top["width"], bottom["width"])
+    top_lines = [l.ljust(width) for l in top["lines"]]
+    bottom_lines = [l.ljust(width) for l in bottom["lines"]]
+    combined = top_lines + bottom_lines
+
+    h_top = len(top_lines)
+    anchor_top = top["anchor"]
+    anchor_bottom = h_top + bottom["anchor"]
+    target = (anchor_top + anchor_bottom) // 2
+
+    box_h = len(parent_lines)
+    box_anchor = box_h // 2
+    start = max(0, target - box_anchor)
+    end = start + box_h
+
+    if end > len(combined):
+        combined += [" " * width] * (end - len(combined))
+
+    box_w = max(len(l) for l in parent_lines)
+    new_lines = []
+    for i, left in enumerate(combined):
+        if start <= i < end:
+            right = parent_lines[i - start]
+        else:
+            right = " " * box_w
+        new_lines.append(left + " " * _GAP + right.ljust(box_w))
+
+    return {"lines": new_lines, "width": width + _GAP + box_w, "anchor": start + box_anchor}
+
+
+def _r16_group(parts, winner_of, win_pct, r32a, r32b, r16):
+    leaf_a = _leaf(parts, winner_of, win_pct, r32a)
+    leaf_b = _leaf(parts, winner_of, win_pct, r32b)
+    box16 = _box_lines(parts, winner_of, win_pct, r16)
+    return _hmerge(leaf_a, leaf_b, box16)
+
+
+def _qf_group(parts, winner_of, win_pct, g1, g2, qf):
+    grp_a = _r16_group(parts, winner_of, win_pct, *g1)
+    grp_b = _r16_group(parts, winner_of, win_pct, *g2)
+    boxqf = _box_lines(parts, winner_of, win_pct, qf)
+    return _hmerge(grp_a, grp_b, boxqf)
 
 
 def _format_bracket_ascii(res):
-    """Deterministic ASCII knockout bracket: every match shows each team's
-    Elo-model win probability, and the favorite ('>') is the one carried
-    into the next round."""
+    """Deterministic ASCII knockout bracket: every match is a card showing
+    each team's Elo-model win probability, and the favorite ('>') is the one
+    carried into the next round, laid out as a standard left-to-right
+    tournament tree (each round's box centered between its two feeders)."""
     parts, winner_of, loser_of, win_pct = _deterministic_bracket(res)
 
-    # (R32 feeders, R16, QF) groups, two groups per semifinal
+    # (R32 a, R32 b, R16) feeding each quarterfinal, paired by semifinal
     quarters = [
-        ((74, 77, 89), (73, 75, 90), 97, 101),
-        ((83, 84, 93), (81, 82, 94), 98, 101),
-        ((76, 78, 91), (79, 80, 92), 99, 102),
-        ((86, 88, 95), (85, 87, 96), 100, 102),
+        ((74, 77, 89), (73, 75, 90), 97),
+        ((83, 84, 93), (81, 82, 94), 98),
+        ((76, 78, 91), (79, 80, 92), 99),
+        ((86, 88, 95), (85, 87, 96), 100),
     ]
 
+    qf_trees = [_qf_group(parts, winner_of, win_pct, g1, g2, qf) for (g1, g2, qf) in quarters]
+
+    sf_box_1 = _box_lines(parts, winner_of, win_pct, 101)
+    sf_box_2 = _box_lines(parts, winner_of, win_pct, 102)
+    sf_tree_1 = _hmerge(qf_trees[0], qf_trees[1], sf_box_1)
+    sf_tree_2 = _hmerge(qf_trees[2], qf_trees[3], sf_box_2)
+
+    final_box = _box_lines(parts, winner_of, win_pct, bracket.FINAL_NO)
+    final_tree = _hmerge(sf_tree_1, sf_tree_2, final_box)
+
     lines = ["## Knockout bracket (most-likely-winner path)", "", "```text"]
-    sf_groups = [[], []]
-    for (g1, g2, qf, sf) in quarters:
-        block = _ascii_round16_block(parts, winner_of, win_pct, g1[0], g1[1], g1[2])
-        block += _ascii_round16_block(parts, winner_of, win_pct, g2[0], g2[1], g2[2])
-        block += _ascii_match(parts, winner_of, win_pct, qf, 2)
-        sf_groups[0 if sf == 101 else 1].extend(block)
-
-    for half, sf_no in zip(sf_groups, (101, 102)):
-        lines += half
-        lines += _ascii_match(parts, winner_of, win_pct, sf_no, 3)
-        lines.append("")
-
-    lines += _ascii_match(parts, winner_of, win_pct, bracket.FINAL_NO, 4)
+    lines += final_tree["lines"]
     lines.append("")
-    lines += _ascii_match(parts, winner_of, win_pct, bracket.THIRD_PLACE_NO, 0)
+    lines += _box_lines(parts, winner_of, win_pct, bracket.THIRD_PLACE_NO)
     lines.append("")
     lines.append(f"Champion: {winner_of[bracket.FINAL_NO]}")
     lines.append("```")
