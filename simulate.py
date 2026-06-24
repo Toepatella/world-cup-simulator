@@ -382,22 +382,20 @@ def _slot_team(res, no, side):
 def _match_graphic_block(res, no):
     home_probs = res["bracket"]["home_slot_probs"].get(no, {})
     away_probs = res["bracket"]["away_slot_probs"].get(no, {})
-    win_probs = res["bracket"]["match_win_probs"].get(no, {})
     if not home_probs and not away_probs:
         return [f"{no:>3} {_stage_label(no)}"]
 
     home_best, _ = max(home_probs.items(), key=lambda x: x[1])
     away_best, _ = max(away_probs.items(), key=lambda x: x[1])
-    home_pair_win = win_probs.get(home_best, 0.0)
-    away_pair_win = win_probs.get(away_best, 0.0)
-    total = home_pair_win + away_pair_win
-    if total > 0:
-        home_pair_win /= total
-        away_pair_win /= total
+    ko_host_adv = res["bracket"].get("ko_host_adv", 0.0)
+    home_elo = ratings.ELO[home_best] + (ko_host_adv if home_best in data.HOSTS else 0.0)
+    away_elo = ratings.ELO[away_best] + (ko_host_adv if away_best in data.HOSTS else 0.0)
+    home_win = 1.0 / (1.0 + 10.0 ** (-(home_elo - away_elo) / 400.0))
+    away_win = 1.0 - home_win
     return [
-        f"{no:>3} {_stage_label(no)}",
-        f"  {_short_team(home_best, 32):<32} {fmt_pct(home_pair_win)}",
-        f"  {_short_team(away_best, 32):<32} {fmt_pct(away_pair_win)}",
+        f"{_stage_label(no)}",
+        f"  {_short_team(home_best, 32)} {fmt_pct(home_win)}",
+        f"  {_short_team(away_best, 32)} {fmt_pct(away_win)}",
     ]
 
 

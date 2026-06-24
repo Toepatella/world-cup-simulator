@@ -11,6 +11,7 @@ the unplayed group fixtures and the entire knockout are simulated.
 
 
 
+
 ## Headline results (50,000 simulations)
 
 ### Title odds — probability of reaching each knockout round (and winning)
@@ -104,91 +105,91 @@ Sorted by championship %. `R32` = reach the knockout stage at all.
 ```text
 R32                                   R16                               QF                                SF                                Final                             
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- 74 R32                                                                                                                                                                       
-  Germany                          95.08%                                                                                                                                        
-  Bosnia and Herzegovina           4.92%                                                                                                                                        
-                                       89 R16                                                                                                                                 
-                                        Germany                          36.76%                                                                                                      
-                                        France                           63.24%                                                                                                      
+R32                                                                                                                                                                           
+  Germany 86.52%                                                                                                                                                              
+  Bosnia and Herzegovina 13.48%                                                                                                                                               
+                                      R16                                                                                                                                     
+                                        Germany 30.27%                                                                                                                        
+                                        France 69.73%                                                                                                                         
 
-                                                                         97 QF                                                                                                
-                                                                          France                           73.68%                                                                    
-                                                                          Netherlands                      26.32%                                                                    
- 73 R32                                                                                                                                                                       
-  South Korea                      49.13%                                                                                                                                        
-  Canada                           50.87%                                                                                                                                        
-                                       90 R16                                                                                                                                 
-                                        Canada                           32.30%                                                                                                      
-                                        Netherlands                      67.70%                                                                                                      
-
-
-                                                                                                          101 SF                                                              
-                                                                                                            France                           39.85%                                  
-                                                                                                            Spain                            60.15%                                  
-
- 83 R32                                                                                                                                                                       
-  Portugal                         62.52%                                                                                                                                        
-  Croatia                          37.48%                                                                                                                                        
-                                       93 R16                                                                                                                                 
-                                        Portugal                         22.38%                                                                                                      
-                                        Spain                            77.62%                                                                                                      
-
-                                                                         98 QF                                                                                                
-                                                                          Spain                            89.05%                                                                    
-                                                                          United States                    10.95%                                                                    
- 81 R32                                                                                                                                                                       
-  United States                    76.32%                                                                                                                                        
-  Bosnia and Herzegovina           23.68%                                                                                                                                        
-                                       94 R16                                                                                                                                 
-                                        United States                    78.57%                                                                                                      
-                                        Egypt                            21.43%                                                                                                      
+                                                                        QF                                                                                                    
+                                                                          France 69.12%                                                                                       
+                                                                          Netherlands 30.88%                                                                                  
+R32                                                                                                                                                                           
+  South Korea 52.73%                                                                                                                                                          
+  Canada 47.27%                                                                                                                                                               
+                                      R16                                                                                                                                     
+                                        Canada 26.52%                                                                                                                         
+                                        Netherlands 73.48%                                                                                                                    
 
 
-                                                                                                                                            104 Final                         
-                                                                                                                                              Spain                            46.74%
-                                                                                                                                              Argentina                        53.26%
+                                                                                                          SF                                                                  
+                                                                                                            France 43.56%                                                     
+                                                                                                            Spain 56.44%                                                      
 
- 76 R32                                                                                                                                                                       
-  Brazil                           58.34%                                                                                                                                        
-  Japan                            41.66%                                                                                                                                        
-                                       91 R16                                                                                                                                 
-                                        Brazil                           41.14%                                                                                                      
-                                        Norway                           58.86%                                                                                                      
+R32                                                                                                                                                                           
+  Portugal 62.13%                                                                                                                                                             
+  Croatia 37.87%                                                                                                                                                              
+                                      R16                                                                                                                                     
+                                        Portugal 28.24%                                                                                                                       
+                                        Spain 71.76%                                                                                                                          
 
-                                                                         99 QF                                                                                                
-                                                                          Norway                           28.14%                                                                    
-                                                                          England                          71.86%                                                                    
- 79 R32                                                                                                                                                                       
-  Mexico                           80.60%                                                                                                                                        
-  Scotland                         19.40%                                                                                                                                        
-                                       92 R16                                                                                                                                 
-                                        Mexico                           27.86%                                                                                                      
-                                        England                          72.14%                                                                                                      
+                                                                        QF                                                                                                    
+                                                                          Spain 88.17%                                                                                        
+                                                                          United States 11.83%                                                                                
+R32                                                                                                                                                                           
+  United States 71.99%                                                                                                                                                        
+  Bosnia and Herzegovina 28.01%                                                                                                                                               
+                                      R16                                                                                                                                     
+                                        United States 59.80%                                                                                                                  
+                                        Egypt 40.20%                                                                                                                          
 
 
-                                                                                                          102 SF                                                              
-                                                                                                            England                          30.85%                                  
-                                                                                                            Argentina                        69.15%                                  
+                                                                                                                                            Final                             
+                                                                                                                                              Spain 50.14%                    
+                                                                                                                                              Argentina 49.86%                
 
- 86 R32                                                                                                                                                                       
-  Argentina                        97.32%                                                                                                                                        
-  Cape Verde                       2.68%                                                                                                                                        
-                                       95 R16                                                                                                                                 
-                                        Argentina                        91.52%                                                                                                      
-                                        Australia                        8.48%                                                                                                      
+R32                                                                                                                                                                           
+  Brazil 59.66%                                                                                                                                                               
+  Japan 40.34%                                                                                                                                                                
+                                      R16                                                                                                                                     
+                                        Brazil 57.01%                                                                                                                         
+                                        Norway 42.99%                                                                                                                         
 
-                                                                        100 QF                                                                                                
-                                                                          Argentina                        77.89%                                                                    
-                                                                          Colombia                         22.11%                                                                    
- 85 R32                                                                                                                                                                       
-  Switzerland                      89.93%                                                                                                                                        
-  Egypt                            10.07%                                                                                                                                        
-                                       96 R16                                                                                                                                 
-                                        Switzerland                      35.62%                                                                                                      
-                                        Colombia                         64.38%                                                                                                      
- 87 R32                                                                                                                                                                       
-  Colombia                         90.54%                                                                                                                                        
-  Ghana                            9.46%                                                                                                                                        
+                                                                        QF                                                                                                    
+                                                                          Norway 32.62%                                                                                       
+                                                                          England 67.38%                                                                                      
+R32                                                                                                                                                                           
+  Mexico 62.27%                                                                                                                                                               
+  Scotland 37.73%                                                                                                                                                             
+                                      R16                                                                                                                                     
+                                        Mexico 26.86%                                                                                                                         
+                                        England 73.14%                                                                                                                        
+
+
+                                                                                                          SF                                                                  
+                                                                                                            England 39.65%                                                    
+                                                                                                            Argentina 60.35%                                                  
+
+R32                                                                                                                                                                           
+  Argentina 95.28%                                                                                                                                                            
+  Cape Verde 4.72%                                                                                                                                                            
+                                      R16                                                                                                                                     
+                                        Argentina 84.07%                                                                                                                      
+                                        Australia 15.93%                                                                                                                      
+
+                                                                        QF                                                                                                    
+                                                                          Argentina 67.88%                                                                                    
+                                                                          Colombia 32.12%                                                                                     
+R32                                                                                                                                                                           
+  Switzerland 70.82%                                                                                                                                                          
+  Egypt 29.18%                                                                                                                                                                
+                                      R16                                                                                                                                     
+                                        Switzerland 31.74%                                                                                                                    
+                                        Colombia 68.26%                                                                                                                       
+R32                                                                                                                                                                           
+  Colombia 92.68%                                                                                                                                                             
+  Ghana 7.32%                                                                                                                                                                 
 ```
 
 ### Group-stage advancement
