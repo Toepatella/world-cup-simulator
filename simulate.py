@@ -352,16 +352,22 @@ def _deterministic_bracket(res):
     return parts, winner_of, loser_of, win_pct
 
 
+_BOX_NAMEW = 16
+_BOX_WIDTH = _BOX_NAMEW + 1 + 7 + 2  # marker+space+name+space+pct, padded
+
+
 def _ascii_match(parts, winner_of, win_pct, no, indent):
     home, away = parts[no]
     winner = winner_of[no]
     pad = "  " * indent
-    namew = 22 - 2 * indent
-    lines = [f"{pad}[{no}] {_stage_label(no)}"]
+    lines = [f"{pad}{_stage_label(no)}",
+             f"{pad}+" + "-" * _BOX_WIDTH + "+"]
     for t in (home, away):
         mark = ">" if t == winner else " "
         pct = fmt_pct(win_pct[no][t])
-        lines.append(f"{pad} {mark} {_short_team(t, max(namew, 8)):<{max(namew, 8)}} {pct:>7}")
+        row = f"{mark} {_short_team(t, _BOX_NAMEW):<{_BOX_NAMEW}} {pct:>7}"
+        lines.append(f"{pad}|{row:<{_BOX_WIDTH}}|")
+    lines.append(f"{pad}+" + "-" * _BOX_WIDTH + "+")
     return lines
 
 
