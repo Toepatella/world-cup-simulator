@@ -304,135 +304,95 @@ def _top_n(counter, n=3):
     return sorted(counter.items(), key=lambda x: x[1], reverse=True)[:n]
 
 
-def _bracket_match_order():
-    return (bracket.R32_NOS + bracket.R16_NOS + bracket.QF_NOS +
-            bracket.SF_NOS + [bracket.THIRD_PLACE_NO, bracket.FINAL_NO])
-
-
-def _format_bracket_table(res):
-    lines = []
-    lines.append("### Projected knockout bracket")
-    lines.append("")
-    lines.append("| Match | Stage | Favored winner | P(win) |")
-    lines.append("|---|---|---|---|")
-    for no in _bracket_match_order():
-        probs = res["bracket"]["match_win_probs"].get(no, {})
-        if not probs:
-            continue
-        winner, p = max(probs.items(), key=lambda x: x[1])
-        lines.append(f"| {no} | {_stage_label(no)} | {winner} | {fmt_pct(p)} |")
-    lines.append("")
-    return lines
-
-
-def _match_appearances(res, no):
-    home_probs = res["bracket"]["home_slot_probs"].get(no, {})
-    away_probs = res["bracket"]["away_slot_probs"].get(no, {})
-    appear = Counter()
-    for t, p in home_probs.items():
-        appear[t] += p
-    for t, p in away_probs.items():
-        appear[t] += p
-    return appear
-
-
-def _match_conditional_win_rows(res, no, top=4):
-    appear = _match_appearances(res, no)
-    win_probs = res["bracket"]["match_win_probs"].get(no, {})
-    rows = []
-    for team, p_appear in sorted(appear.items(), key=lambda x: x[1], reverse=True)[:top]:
-        p_win = win_probs.get(team, 0.0)
-        p_given = p_win / p_appear if p_appear > 0 else 0.0
-        rows.append((team, p_appear, p_given, p_win))
-    return rows
-
-
-def _format_bracket_detailed(res):
-    lines = ["## Projected knockout bracket details", "", "```text"]
-    for no in _bracket_match_order():
-        rows = _match_conditional_win_rows(res, no, top=4)
-        if not rows:
-            continue
-        lines.append(f"Match {no} ({_stage_label(no)})")
-        for team, p_appear, p_given, p_win in rows:
-            lines.append(
-                f"  {team:<24} appears {fmt_pct(p_appear):>8} of the time, "
-                f"wins {fmt_pct(p_given):>8} if there, total win {fmt_pct(p_win):>8}"
-            )
-        lines.append("")
-    lines.append("```")
-    lines.append("")
-    return lines
-
-
-def _short_team(team, max_len=12):
+def _short_team(team, max_len=20):
     if len(team) <= max_len:
         return team
     return team[: max_len - 1] + "…"
 
 
-def _slot_team(res, no, side):
-    probs = res["bracket"][f"{side}_slot_probs"].get(no, {})
-    if not probs:
-        return "?"
-    team, p = max(probs.items(), key=lambda x: x[1])
-    return f"{_short_team(team)} ({fmt_pct(p)})"
+def _deterministic_bracket(res):
+    """Play one single, internally-consistent bracket: at every step the team
+    that is more likely to win (per the Elo model) is the one that advances.
 
+    Unlike the simulation-aggregate slot probabilities, this never mixes
+    opponents from different simulated universes, so the path is coherent
+    end to end (e.g. it can't have a weaker team "beat" a stronger one just
+    because of how the random draws landed across iterations).
+    """
+    winners, runners, thirds = {}, {}, {}
+    for g, members in data.GROUPS.items():
+        winners[g] = max(members, key=lambda t: res["p1"][t])
+        runners[g] = max(members, key=lambda t: res["p2"][t])
+        thirds[g] = max(members, key=lambda t: res["p3"][t])
 
-def _match_graphic_block(res, no):
-    home_probs = res["bracket"]["home_slot_probs"].get(no, {})
-    away_probs = res["bracket"]["away_slot_probs"].get(no, {})
-    if not home_probs and not away_probs:
-        return [f"{no:>3} {_stage_label(no)}"]
+    # most likely 8 third-placed teams to qualify, ranked by Elo strength
+    qualified_groups = sorted(thirds, key=lambda g: ratings.ELO[thirds[g]],
+                               reverse=True)[:N_ADVANCE_THIRDS]
+    third_assignment = bracket.allocate_thirds(qualified_groups)
 
-    home_best, _ = max(home_probs.items(), key=lambda x: x[1])
-    away_best, _ = max(away_probs.items(), key=lambda x: x[1])
     ko_host_adv = res["bracket"].get("ko_host_adv", 0.0)
-    home_elo = ratings.ELO[home_best] + (ko_host_adv if home_best in data.HOSTS else 0.0)
-    away_elo = ratings.ELO[away_best] + (ko_host_adv if away_best in data.HOSTS else 0.0)
-    home_win = 1.0 / (1.0 + 10.0 ** (-(home_elo - away_elo) / 400.0))
-    away_win = 1.0 - home_win
-    return [
-        f"{_stage_label(no)}",
-        f"  {_short_team(home_best, 32)} {fmt_pct(home_win)}",
-        f"  {_short_team(away_best, 32)} {fmt_pct(away_win)}",
+
+    def win_fn(a, b):
+        ea = ratings.ELO[a] + (ko_host_adv if a in data.HOSTS else 0.0)
+        eb = ratings.ELO[b] + (ko_host_adv if b in data.HOSTS else 0.0)
+        p = 1.0 / (1.0 + 10.0 ** (-(ea - eb) / 400.0))
+        return (a, b) if p >= 0.5 else (b, a)
+
+    parts, winner_of, loser_of = bracket.play_bracket_with_matches(
+        winners, runners, thirds, third_assignment, win_fn)
+    return parts, winner_of, loser_of
+
+
+def _ascii_match(parts, winner_of, no, indent):
+    home, away = parts[no]
+    winner = winner_of[no]
+    pad = "  " * indent
+    lines = [f"{pad}[{no}] {_stage_label(no)}"]
+    for t in (home, away):
+        mark = ">" if t == winner else " "
+        lines.append(f"{pad} {mark} {_short_team(t)}")
+    return lines
+
+
+def _ascii_round16_block(parts, winner_of, r32a, r32b, r16):
+    lines = []
+    lines += _ascii_match(parts, winner_of, r32a, 0)
+    lines += _ascii_match(parts, winner_of, r32b, 0)
+    lines += _ascii_match(parts, winner_of, r16, 1)
+    return lines
+
+
+def _format_bracket_ascii(res):
+    """Deterministic ASCII knockout bracket: every match shows who's favored
+    to advance ('>'), and that team is the one carried into the next round."""
+    parts, winner_of, loser_of = _deterministic_bracket(res)
+
+    # (R32 feeders, R16, QF) groups, two groups per semifinal
+    quarters = [
+        ((74, 77, 89), (73, 75, 90), 97, 101),
+        ((83, 84, 93), (81, 82, 94), 98, 101),
+        ((76, 78, 91), (79, 80, 92), 99, 102),
+        ((86, 88, 95), (85, 87, 96), 100, 102),
     ]
 
+    lines = ["## Knockout bracket (most-likely-winner path)", "", "```text"]
+    sf_groups = [[], []]
+    for (g1, g2, qf, sf) in quarters:
+        block = _ascii_round16_block(parts, winner_of, g1[0], g1[1], g1[2])
+        block += _ascii_round16_block(parts, winner_of, g2[0], g2[1], g2[2])
+        block += _ascii_match(parts, winner_of, qf, 2)
+        sf_groups[0 if sf == 101 else 1].extend(block)
 
-def _bracket_layout_rows(res):
-    rows = [""] * 37
-    def put(stage, row, no):
-        rows[row] = rows[row] or {}
-        rows[row][stage] = _match_graphic_block(res, no)
+    for half, sf_no in zip(sf_groups, (101, 102)):
+        lines += half
+        lines += _ascii_match(parts, winner_of, sf_no, 3)
+        lines.append("")
 
-    put("r32", 0, 74); put("r16", 1, 89); put("qf", 3, 97); put("r32", 4, 73); put("r16", 5, 90)
-    put("sf", 8, 101)
-    put("r32", 10, 83); put("r16", 11, 93); put("qf", 13, 98); put("r32", 14, 81); put("r16", 15, 94)
-    put("final", 18, 104)
-    put("r32", 20, 76); put("r16", 21, 91); put("qf", 23, 99); put("r32", 24, 79); put("r16", 25, 92)
-    put("sf", 28, 102)
-    put("r32", 30, 86); put("r16", 31, 95); put("qf", 33, 100); put("r32", 34, 85); put("r16", 35, 96)
-    put("r32", 36, 87)
-    return rows
-
-
-def _format_bracket_graphic(res):
-    widths = [38, 34, 34, 34, 34]
-    header = (
-        f"{'R32':<{widths[0]}}{'R16':<{widths[1]}}"
-        f"{'QF':<{widths[2]}}{'SF':<{widths[3]}}{'Final':<{widths[4]}}"
-    )
-    sep = "".join("-" * w for w in widths)
-    lines = ["## Full knockout bracket graphic", "", "```text", header, sep]
-    for row in _bracket_layout_rows(res):
-        if not row:
-            lines.append("")
-            continue
-        blocks = [row.get(stage, [""]) for stage in ("r32", "r16", "qf", "sf", "final")]
-        max_lines = max(len(block) for block in blocks)
-        for i in range(max_lines):
-            cells = [(block[i] if i < len(block) else "") for block in blocks]
-            lines.append("".join(c.ljust(w) for c, w in zip(cells, widths)))
+    lines += _ascii_match(parts, winner_of, bracket.FINAL_NO, 4)
+    lines.append("")
+    lines += _ascii_match(parts, winner_of, bracket.THIRD_PLACE_NO, 0)
+    lines.append("")
+    lines.append(f"Champion: {winner_of[bracket.FINAL_NO]}")
     lines.append("```")
     lines.append("")
     return lines
@@ -562,15 +522,10 @@ def print_report(res, iters, mu, sup_scale, host_adv):
         cells = [fmt_pct(res[k][t]) for k in ("adv", "r16", "qf", "sf", "final", "champ")]
         print(_prow(t, cells, kw))
 
-    print("\nBRACKET SUMMARY   most likely winner and win probability by match")
-    print("| Match | Stage | Favored winner | P(win) |")
-    print("|---|---|---|---|")
-    for no in _bracket_match_order():
-        win_probs = res["bracket"]["match_win_probs"].get(no, {})
-        if not win_probs:
-            continue
-        winner, p = max(win_probs.items(), key=lambda x: x[1])
-        print(f"| {no} | {_stage_label(no)} | {winner} | {fmt_pct(p)} |")
+    print("\nKNOCKOUT BRACKET   most-likely-winner path")
+    for line in _format_bracket_ascii(res):
+        if line not in ("## Knockout bracket (most-likely-winner path)", "```text", "```"):
+            print(line)
 
     if res.get("team_summary"):
         ts = res["team_summary"]
@@ -645,9 +600,7 @@ def _write_markdown(res, stand, iters, mu, sup_scale, host_adv):
         lines.append(_prow(t, cells, kw))
     lines += ["```", ""]
 
-    lines += _format_bracket_table(res)
-    lines += _format_bracket_graphic(res)
-    lines += _format_bracket_detailed(res)
+    lines += _format_bracket_ascii(res)
     if res.get("team_summary"):
         lines += _format_team_summary(res["team_summary"], iters)
 
@@ -700,18 +653,7 @@ def _format_readme_headline(res, stand, iters, snapshot_date):
     lines.append("")
     lines.append("*(All 48 teams, including the long shots, are in the CSV. Remaining sides each sit below ~0.7% to win.)*")
     lines.append("")
-    lines.append("### Projected knockout bracket")
-    lines.append("")
-    lines.append("| Match | Stage | Favored winner | P(win) |")
-    lines.append("|---|---|---|---|")
-    for no in _bracket_match_order():
-        win_probs = res["bracket"]["match_win_probs"].get(no, {})
-        if not win_probs:
-            continue
-        winner, p = max(win_probs.items(), key=lambda x: x[1])
-        lines.append(f"| {no} | {_stage_label(no)} | {winner} | {fmt_pct(p)} |")
-    lines.append("")
-    lines += _format_bracket_graphic(res)
+    lines += _format_bracket_ascii(res)
     lines.append("### Group-stage advancement")
     lines.append("`ADV` = P(1st) + P(2nd) + P(qualify as one of the 8 best thirds). Sorted by ADV.")
     lines.append("Full machine-readable table: [`output/group_probabilities.csv`](output/group_probabilities.csv).")
