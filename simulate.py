@@ -379,21 +379,34 @@ def _slot_team(res, no, side):
     return f"{_short_team(team)} ({fmt_pct(p)})"
 
 
-def _match_graphic_label(res, no):
-    home = _slot_team(res, no, "home")
-    away = _slot_team(res, no, "away")
+def _match_graphic_block(res, no):
+    home_probs = res["bracket"]["home_slot_probs"].get(no, {})
+    away_probs = res["bracket"]["away_slot_probs"].get(no, {})
     win_probs = res["bracket"]["match_win_probs"].get(no, {})
-    if win_probs:
-        fav, p = max(win_probs.items(), key=lambda x: x[1])
-        return f"{no:>3} {home} vs {away} [{_short_team(fav)} {fmt_pct(p)}]"
-    return f"{no:>3} {home} vs {away}"
+    if not home_probs and not away_probs:
+        return [f"{no:>3} {_stage_label(no)}"]
+
+    home_best, home_best_p = max(home_probs.items(), key=lambda x: x[1])
+    away_best, away_best_p = max(away_probs.items(), key=lambda x: x[1])
+    home_pair_win = win_probs.get(home_best, 0.0)
+    away_pair_win = win_probs.get(away_best, 0.0)
+    total = home_pair_win + away_pair_win
+    if total > 0:
+        home_pair_win /= total
+        away_pair_win /= total
+    return [
+        f"{no:>3} {_stage_label(no)}",
+        f"  {_short_team(home_best, 24):<24} {fmt_pct(home_best_p):>9}",
+        f"  {_short_team(away_best, 24):<24} {fmt_pct(away_best_p):>9}",
+        f"  {_short_team(home_best, 24)} win {fmt_pct(home_pair_win)}, {_short_team(away_best, 24)} win {fmt_pct(away_pair_win)}",
+    ]
 
 
 def _bracket_layout_rows(res):
     rows = [""] * 37
     def put(stage, row, no):
         rows[row] = rows[row] or {}
-        rows[row][stage] = _match_graphic_label(res, no)
+        rows[row][stage] = _match_graphic_block(res, no)
 
     put("r32", 0, 74); put("r16", 1, 89); put("qf", 3, 97); put("r32", 4, 73); put("r16", 5, 90)
     put("sf", 8, 101)
@@ -418,8 +431,11 @@ def _format_bracket_graphic(res):
         if not row:
             lines.append("")
             continue
-        cells = [row.get(stage, "") for stage in ("r32", "r16", "qf", "sf", "final")]
-        lines.append("".join(c.ljust(w) for c, w in zip(cells, widths)))
+        blocks = [row.get(stage, [""]) for stage in ("r32", "r16", "qf", "sf", "final")]
+        max_lines = max(len(block) for block in blocks)
+        for i in range(max_lines):
+            cells = [(block[i] if i < len(block) else "") for block in blocks]
+            lines.append("".join(c.ljust(w) for c, w in zip(cells, widths)))
     lines.append("```")
     lines.append("")
     return lines
