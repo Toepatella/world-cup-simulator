@@ -146,20 +146,22 @@ def _resolve_r32(spec, winners, runners, thirds_team, third_assignment):
     raise ValueError(spec)
 
 
-def play_bracket(winners, runners, thirds_team, third_assignment, win_fn):
-    """Play the whole knockout bracket.
+def play_bracket_with_matches(winners, runners, thirds_team, third_assignment, win_fn):
+    """Play the full knockout bracket and return every match's participants.
 
     winners/runners/thirds_team: dict group_letter -> team name.
     third_assignment: {slot_match_no -> group_letter} from allocate_thirds.
     win_fn(team_a, team_b) -> (winner, loser).
 
-    Returns the teams that REACHED each round, plus the medal positions.
+    Returns (parts, winner_of, loser_of) where parts is a dict match_no ->
+    (home_team, away_team).
     """
-    winner_of, loser_of = {}, {}
+    winner_of, loser_of, parts = {}, {}, {}
 
     for (no, hspec, aspec) in R32:
         ht = _resolve_r32(hspec, winners, runners, thirds_team, third_assignment)
         at = _resolve_r32(aspec, winners, runners, thirds_team, third_assignment)
+        parts[no] = (ht, at)
         w, l = win_fn(ht, at)
         winner_of[no], loser_of[no] = w, l
 
@@ -167,9 +169,16 @@ def play_bracket(winners, runners, thirds_team, third_assignment, win_fn):
         (hk, hn), (ak, an) = LATER[no]
         ht = winner_of[hn] if hk == "Wm" else loser_of[hn]
         at = winner_of[an] if ak == "Wm" else loser_of[an]
+        parts[no] = (ht, at)
         w, l = win_fn(ht, at)
         winner_of[no], loser_of[no] = w, l
 
+    return parts, winner_of, loser_of
+
+
+def play_bracket(winners, runners, thirds_team, third_assignment, win_fn):
+    parts, winner_of, loser_of = play_bracket_with_matches(
+        winners, runners, thirds_team, third_assignment, win_fn)
     return {
         "r16": [winner_of[n] for n in R32_NOS],     # reached R16 (won R32)
         "qf": [winner_of[n] for n in R16_NOS],       # reached QF

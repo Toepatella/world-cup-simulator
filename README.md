@@ -9,9 +9,6 @@ the unplayed group fixtures and the entire knockout are simulated.
 ---
 
 
-
-
-
 ## Headline results (50,000 simulations)
 
 ### Title odds — probability of reaching each knockout round (and winning)
@@ -62,6 +59,87 @@ Sorted by championship %. `R32` = reach the knockout stage at all.
 | Ghana | 99.95% | 8.04% | 1.18% | 0.11% | 0.01% | **0.00%** |
 
 *(All 48 teams, including the long shots, are in the CSV. Remaining sides each sit below ~0.7% to win.)*
+
+### Projected knockout bracket
+
+| Match | Stage | Favored winner | P(win) |
+|---|---|---|---|
+| 73 | R32 | Canada | 49.93% |
+| 74 | R32 | Germany | 73.54% |
+| 75 | R32 | Netherlands | 44.26% |
+| 76 | R32 | Brazil | 38.00% |
+| 77 | R32 | France | 68.16% |
+| 78 | R32 | Norway | 60.94% |
+| 79 | R32 | Mexico | 58.95% |
+| 80 | R32 | England | 72.61% |
+| 81 | R32 | United States | 64.85% |
+| 82 | R32 | Egypt | 19.05% |
+| 83 | R32 | Portugal | 42.12% |
+| 84 | R32 | Spain | 76.01% |
+| 85 | R32 | Switzerland | 62.07% |
+| 86 | R32 | Argentina | 91.81% |
+| 87 | R32 | Colombia | 58.52% |
+| 88 | R32 | Australia | 37.63% |
+| 89 | R16 | France | 50.15% |
+| 90 | R16 | Netherlands | 32.22% |
+| 91 | R16 | Norway | 31.39% |
+| 92 | R16 | England | 54.34% |
+| 93 | R16 | Spain | 55.06% |
+| 94 | R16 | United States | 30.72% |
+| 95 | R16 | Argentina | 77.66% |
+| 96 | R16 | Colombia | 41.73% |
+| 97 | QF | France | 38.20% |
+| 98 | QF | Spain | 48.43% |
+| 99 | QF | England | 35.67% |
+| 100 | QF | Argentina | 57.91% |
+| 101 | SF | Spain | 33.88% |
+| 102 | SF | Argentina | 40.29% |
+| 103 | Third place | Argentina | 12.60% |
+| 104 | Final | Argentina | 25.17% |
+
+## Full knockout bracket graphic
+
+```text
+R32                                   R16                               QF                                SF                                Final                             
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 74 Germany (100.00%) vs Bosnia and … (28.41%) [Germany 73.54%]                                                                                                                                        
+                                       89 Germany (73.54%) vs France (68.16%) [France 50.15%]                                                                                                      
+
+                                                                         97 France (50.15%) vs Netherlands (32.22%) [France 38.20%]                                                                    
+ 73 South Korea (91.47%) vs Canada (100.00%) [Canada 49.93%]                                                                                                                                        
+                                       90 Canada (49.93%) vs Netherlands (44.26%) [Netherlands 32.22%]                                                                                                      
+
+
+                                                                                                          101 France (38.20%) vs Spain (48.43%) [Spain 33.88%]                                  
+
+ 83 Portugal (66.29%) vs Croatia (68.03%) [Portugal 42.12%]                                                                                                                                        
+                                       93 Portugal (42.12%) vs Spain (76.01%) [Spain 55.06%]                                                                                                      
+
+                                                                         98 Spain (55.06%) vs United Stat… (30.72%) [Spain 48.43%]                                                                    
+ 81 United Stat… (100.00%) vs Bosnia and … (71.59%) [United Stat… 64.85%]                                                                                                                                        
+                                       94 United Stat… (64.85%) vs Egypt (19.05%) [United Stat… 30.72%]                                                                                                      
+
+
+                                                                                                                                            104 Spain (33.88%) vs Argentina (40.29%) [Argentina 25.17%]
+
+ 76 Brazil (61.46%) vs Japan (56.91%) [Brazil 38.00%]                                                                                                                                        
+                                       91 Brazil (38.00%) vs Norway (60.94%) [Norway 31.39%]                                                                                                      
+
+                                                                         99 Norway (31.39%) vs England (54.34%) [England 35.67%]                                                                    
+ 79 Mexico (100.00%) vs Scotland (37.81%) [Mexico 58.95%]                                                                                                                                        
+                                       92 Mexico (58.95%) vs England (72.61%) [England 54.34%]                                                                                                      
+
+
+                                                                                                          102 England (35.67%) vs Argentina (57.91%) [Argentina 40.29%]                                  
+
+ 86 Argentina (100.00%) vs Cape Verde (55.41%) [Argentina 91.81%]                                                                                                                                        
+                                       95 Argentina (91.81%) vs Australia (37.63%) [Argentina 77.66%]                                                                                                      
+
+                                                                        100 Argentina (77.66%) vs Colombia (41.73%) [Argentina 57.91%]                                                                    
+ 85 Switzerland (100.00%) vs Egypt (22.98%) [Switzerland 62.07%]                                                                                                                                        
+                                       96 Switzerland (62.07%) vs Colombia (58.52%) [Colombia 41.73%]                                                                                                      
+ 87 Colombia (66.66%) vs Ghana (80.07%) [Colombia 58.52%]                                                                                                                                        
+```
 
 ### Group-stage advancement
 `ADV` = P(1st) + P(2nd) + P(qualify as one of the 8 best thirds). Sorted by ADV.
