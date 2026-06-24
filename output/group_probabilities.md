@@ -264,114 +264,90 @@ Ghana                      99.95%    8.04%    1.18%    0.11%    0.01%    0.00%
 R32                                   R16                               QF                                SF                                Final                             
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  74 R32                                                                                                                                                                       
-  Germany                    100.00%                                                                                                                                          
-  Bosnia and Herzegovina      28.41%                                                                                                                                          
-  Germany win 95.08%, Bosnia and Herzegovina win 4.92%                                                                                                                                        
+  Germany                          95.08%                                                                                                                                        
+  Bosnia and Herzegovina           4.92%                                                                                                                                        
                                        89 R16                                                                                                                                 
-                                        Germany                     73.54%                                                                                                      
-                                        France                      68.16%                                                                                                      
-                                        Germany win 36.76%, France win 63.24%                                                                                                      
+                                        Germany                          36.76%                                                                                                      
+                                        France                           63.24%                                                                                                      
 
                                                                          97 QF                                                                                                
-                                                                          France                      50.15%                                                                    
-                                                                          Netherlands                 32.22%                                                                    
-                                                                          France win 73.68%, Netherlands win 26.32%                                                                    
+                                                                          France                           73.68%                                                                    
+                                                                          Netherlands                      26.32%                                                                    
  73 R32                                                                                                                                                                       
-  South Korea                 91.47%                                                                                                                                          
-  Canada                     100.00%                                                                                                                                          
-  South Korea win 49.13%, Canada win 50.87%                                                                                                                                        
+  South Korea                      49.13%                                                                                                                                        
+  Canada                           50.87%                                                                                                                                        
                                        90 R16                                                                                                                                 
-                                        Canada                      49.93%                                                                                                      
-                                        Netherlands                 44.26%                                                                                                      
-                                        Canada win 32.30%, Netherlands win 67.70%                                                                                                      
+                                        Canada                           32.30%                                                                                                      
+                                        Netherlands                      67.70%                                                                                                      
 
 
                                                                                                           101 SF                                                              
-                                                                                                            France                      38.20%                                  
-                                                                                                            Spain                       48.43%                                  
-                                                                                                            France win 39.85%, Spain win 60.15%                                  
+                                                                                                            France                           39.85%                                  
+                                                                                                            Spain                            60.15%                                  
 
  83 R32                                                                                                                                                                       
-  Portugal                    66.29%                                                                                                                                          
-  Croatia                     68.03%                                                                                                                                          
-  Portugal win 62.52%, Croatia win 37.48%                                                                                                                                        
+  Portugal                         62.52%                                                                                                                                        
+  Croatia                          37.48%                                                                                                                                        
                                        93 R16                                                                                                                                 
-                                        Portugal                    42.12%                                                                                                      
-                                        Spain                       76.01%                                                                                                      
-                                        Portugal win 22.38%, Spain win 77.62%                                                                                                      
+                                        Portugal                         22.38%                                                                                                      
+                                        Spain                            77.62%                                                                                                      
 
                                                                          98 QF                                                                                                
-                                                                          Spain                       55.06%                                                                    
-                                                                          United States               30.72%                                                                    
-                                                                          Spain win 89.05%, United States win 10.95%                                                                    
+                                                                          Spain                            89.05%                                                                    
+                                                                          United States                    10.95%                                                                    
  81 R32                                                                                                                                                                       
-  United States              100.00%                                                                                                                                          
-  Bosnia and Herzegovina      71.59%                                                                                                                                          
-  United States win 76.32%, Bosnia and Herzegovina win 23.68%                                                                                                                                        
+  United States                    76.32%                                                                                                                                        
+  Bosnia and Herzegovina           23.68%                                                                                                                                        
                                        94 R16                                                                                                                                 
-                                        United States               64.85%                                                                                                      
-                                        Egypt                       19.05%                                                                                                      
-                                        United States win 78.57%, Egypt win 21.43%                                                                                                      
+                                        United States                    78.57%                                                                                                      
+                                        Egypt                            21.43%                                                                                                      
 
 
                                                                                                                                             104 Final                         
-                                                                                                                                              Spain                       33.88%
-                                                                                                                                              Argentina                   40.29%
-                                                                                                                                              Spain win 46.74%, Argentina win 53.26%
+                                                                                                                                              Spain                            46.74%
+                                                                                                                                              Argentina                        53.26%
 
  76 R32                                                                                                                                                                       
-  Brazil                      61.46%                                                                                                                                          
-  Japan                       56.91%                                                                                                                                          
-  Brazil win 58.34%, Japan win 41.66%                                                                                                                                         
+  Brazil                           58.34%                                                                                                                                        
+  Japan                            41.66%                                                                                                                                        
                                        91 R16                                                                                                                                 
-                                        Brazil                      38.00%                                                                                                      
-                                        Norway                      60.94%                                                                                                      
-                                        Brazil win 41.14%, Norway win 58.86%                                                                                                      
+                                        Brazil                           41.14%                                                                                                      
+                                        Norway                           58.86%                                                                                                      
 
                                                                          99 QF                                                                                                
-                                                                          Norway                      31.39%                                                                    
-                                                                          England                     54.34%                                                                    
-                                                                          Norway win 28.14%, England win 71.86%                                                                    
+                                                                          Norway                           28.14%                                                                    
+                                                                          England                          71.86%                                                                    
  79 R32                                                                                                                                                                       
-  Mexico                     100.00%                                                                                                                                          
-  Scotland                    37.81%                                                                                                                                          
-  Mexico win 80.60%, Scotland win 19.40%                                                                                                                                        
+  Mexico                           80.60%                                                                                                                                        
+  Scotland                         19.40%                                                                                                                                        
                                        92 R16                                                                                                                                 
-                                        Mexico                      58.95%                                                                                                      
-                                        England                     72.61%                                                                                                      
-                                        Mexico win 27.86%, England win 72.14%                                                                                                      
+                                        Mexico                           27.86%                                                                                                      
+                                        England                          72.14%                                                                                                      
 
 
                                                                                                           102 SF                                                              
-                                                                                                            England                     35.67%                                  
-                                                                                                            Argentina                   57.91%                                  
-                                                                                                            England win 30.85%, Argentina win 69.15%                                  
+                                                                                                            England                          30.85%                                  
+                                                                                                            Argentina                        69.15%                                  
 
  86 R32                                                                                                                                                                       
-  Argentina                  100.00%                                                                                                                                          
-  Cape Verde                  55.41%                                                                                                                                          
-  Argentina win 97.32%, Cape Verde win 2.68%                                                                                                                                        
+  Argentina                        97.32%                                                                                                                                        
+  Cape Verde                       2.68%                                                                                                                                        
                                        95 R16                                                                                                                                 
-                                        Argentina                   91.81%                                                                                                      
-                                        Australia                   37.63%                                                                                                      
-                                        Argentina win 91.52%, Australia win 8.48%                                                                                                      
+                                        Argentina                        91.52%                                                                                                      
+                                        Australia                        8.48%                                                                                                      
 
                                                                         100 QF                                                                                                
-                                                                          Argentina                   77.66%                                                                    
-                                                                          Colombia                    41.73%                                                                    
-                                                                          Argentina win 77.89%, Colombia win 22.11%                                                                    
+                                                                          Argentina                        77.89%                                                                    
+                                                                          Colombia                         22.11%                                                                    
  85 R32                                                                                                                                                                       
-  Switzerland                100.00%                                                                                                                                          
-  Egypt                       22.98%                                                                                                                                          
-  Switzerland win 89.93%, Egypt win 10.07%                                                                                                                                        
+  Switzerland                      89.93%                                                                                                                                        
+  Egypt                            10.07%                                                                                                                                        
                                        96 R16                                                                                                                                 
-                                        Switzerland                 62.07%                                                                                                      
-                                        Colombia                    58.52%                                                                                                      
-                                        Switzerland win 35.62%, Colombia win 64.38%                                                                                                      
+                                        Switzerland                      35.62%                                                                                                      
+                                        Colombia                         64.38%                                                                                                      
  87 R32                                                                                                                                                                       
-  Colombia                    66.66%                                                                                                                                          
-  Ghana                       80.07%                                                                                                                                          
-  Colombia win 90.54%, Ghana win 9.46%                                                                                                                                        
+  Colombia                         90.54%                                                                                                                                        
+  Ghana                            9.46%                                                                                                                                        
 ```
 
 ## Projected knockout bracket details

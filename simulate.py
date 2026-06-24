@@ -386,8 +386,8 @@ def _match_graphic_block(res, no):
     if not home_probs and not away_probs:
         return [f"{no:>3} {_stage_label(no)}"]
 
-    home_best, home_best_p = max(home_probs.items(), key=lambda x: x[1])
-    away_best, away_best_p = max(away_probs.items(), key=lambda x: x[1])
+    home_best, _ = max(home_probs.items(), key=lambda x: x[1])
+    away_best, _ = max(away_probs.items(), key=lambda x: x[1])
     home_pair_win = win_probs.get(home_best, 0.0)
     away_pair_win = win_probs.get(away_best, 0.0)
     total = home_pair_win + away_pair_win
@@ -396,9 +396,8 @@ def _match_graphic_block(res, no):
         away_pair_win /= total
     return [
         f"{no:>3} {_stage_label(no)}",
-        f"  {_short_team(home_best, 24):<24} {fmt_pct(home_best_p):>9}",
-        f"  {_short_team(away_best, 24):<24} {fmt_pct(away_best_p):>9}",
-        f"  {_short_team(home_best, 24)} win {fmt_pct(home_pair_win)}, {_short_team(away_best, 24)} win {fmt_pct(away_pair_win)}",
+        f"  {_short_team(home_best, 32):<32} {fmt_pct(home_pair_win)}",
+        f"  {_short_team(away_best, 32):<32} {fmt_pct(away_pair_win)}",
     ]
 
 
