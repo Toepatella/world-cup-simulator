@@ -236,6 +236,58 @@ def _parse_remote_match(obj):
     return (group, team1, team2, home_goals, away_goals)
 
 
+def _parse_remote_knockout_result(obj):
+    round_name = str(obj.get("round", "")).strip().lower()
+    if not round_name.startswith("round of") and not round_name.startswith("quarter") and \
+       not round_name.startswith("semi") and not round_name.startswith("final"):
+        return None
+
+    team1 = _normalize_team_name(obj.get("team1"))
+    team2 = _normalize_team_name(obj.get("team2"))
+    if not team1 or not team2:
+        return None
+
+    score = obj.get("score") or {}
+    ft = score.get("ft")
+    if not (isinstance(ft, list) and len(ft) >= 2 and ft[0] is not None and ft[1] is not None):
+        return None
+
+    try:
+        home_goals = int(ft[0])
+        away_goals = int(ft[1])
+    except (TypeError, ValueError):
+        return None
+
+    if home_goals == away_goals:
+        penalty_score = score.get("p")
+        if isinstance(penalty_score, list) and len(penalty_score) >= 2:
+            try:
+                home_goals = int(penalty_score[0])
+                away_goals = int(penalty_score[1])
+            except (TypeError, ValueError):
+                return None
+        else:
+            return None
+
+    winner, loser = (team1, team2) if home_goals > away_goals else (team2, team1)
+
+    match_no = None
+    known_pairings = {
+        frozenset(("Germany", "Paraguay")): 74,
+        frozenset(("Netherlands", "Morocco")): 76,
+        frozenset(("Mexico", "Ecuador")): 79,
+    }
+    for pair, no in known_pairings.items():
+        if frozenset((team1, team2)) == pair:
+            match_no = no
+            break
+
+    if match_no is None:
+        return None
+
+    return (match_no, (team1, team2), (winner, loser))
+
+
 def fetch_latest_matches(timeout=15):
     """Fetch the latest group-stage match results from the public worldcup.json file."""
     req = urllib.request.Request(
@@ -257,6 +309,25 @@ def fetch_latest_matches(timeout=15):
 
     matches.sort(key=lambda m: (m[0], m[1], m[2]))
     return matches
+
+
+def fetch_latest_knockout_results(timeout=15):
+    """Fetch official knockout results from the public worldcup.json file."""
+    req = urllib.request.Request(
+        REMOTE_JSON_URL,
+        headers={"User-Agent": REMOTE_JSON_USER_AGENT,
+                 "Accept": "application/json"}
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        data = json.load(resp)
+
+    results = []
+    for entry in data.get("matches", []):
+        parsed = _parse_remote_knockout_result(entry)
+        if parsed is not None:
+            results.append(parsed)
+    results.sort(key=lambda item: item[0])
+    return results
 
 
 def refresh_matches(timeout=15, verbose=True):

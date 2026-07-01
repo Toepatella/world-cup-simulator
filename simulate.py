@@ -91,6 +91,13 @@ def simulate(iters, seed, mu, sup_scale, host_adv, ko_host_adv=KO_HOST_ADV_DEFAU
     ag = rng.poisson(lb[:, None], size=(n_rem, iters))   # away goals
     lots_all = rng.random((iters, len(teams)))           # final-resort random lot
 
+    official_knockout = data.fetch_latest_knockout_results()
+    fixed_results = {}
+    fixed_matchups = {}
+    for match_no, matchup, result in official_knockout:
+        fixed_matchups[match_no] = matchup
+        fixed_results[match_no] = result
+
     # pre-split fixtures by group: fixed (played) tuples + remaining indices
     group_fixed = {g: [(gg, h, a, hs, as_) for (gg, h, a, hs, as_) in data.MATCHES
                        if gg == g and hs is not None] for g in data.GROUPS}
@@ -168,7 +175,9 @@ def simulate(iters, seed, mu, sup_scale, host_adv, ko_host_adv=KO_HOST_ADV_DEFAU
         # ---- knockout bracket ----
         third_assignment = bracket.allocate_thirds(qualified_groups, rng)
         parts, winner_of, loser_of = bracket.play_bracket_with_matches(
-            winners, runners, thirds_team, third_assignment, win_fn)
+            winners, runners, thirds_team, third_assignment, win_fn,
+            fixed_results=fixed_results,
+            fixed_matchups=fixed_matchups)
         for no, (home, away) in parts.items():
             home_slot_counts[no][home] += 1
             away_slot_counts[no][away] += 1
@@ -370,10 +379,16 @@ def _deterministic_bracket(res):
         p = elo_win_prob(a, b)
         return (a, b) if p >= 0.5 else (b, a)
 
+    fixed_results = {}
+    fixed_matchups = {}
+    for match_no, matchup, result in data.fetch_latest_knockout_results():
+        fixed_matchups[match_no] = matchup
+        fixed_results[match_no] = result
+
     parts, winner_of, loser_of = bracket.play_bracket_with_matches(
         winners, runners, thirds, third_assignment, win_fn,
-        fixed_results=bracket.FIXED_KNOCKOUT_RESULTS,
-        fixed_matchups=bracket.FIXED_KNOCKOUT_MATCHUPS)
+        fixed_results=fixed_results,
+        fixed_matchups=fixed_matchups)
 
     win_pct = {}
     for no, (home, away) in parts.items():

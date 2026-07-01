@@ -89,16 +89,10 @@ THIRD_SLOT_NOS = sorted(THIRD_SLOTS.keys())
 
 # Explicit knockout pairings/results to reflect known FIFA outcomes in the
 # bracket view. These override the model for matches where the official data is
-# known, including the current published outcomes for Germany/Paraguay and
-# Morocco/Netherlands.
-FIXED_KNOCKOUT_MATCHUPS = {
-    74: ("Germany", "Paraguay"),
-    76: ("Morocco", "Netherlands"),
-}
-FIXED_KNOCKOUT_RESULTS = {
-    74: ("Paraguay", "Germany"),
-    76: ("Morocco", "Netherlands"),
-}
+# known. The simulator now loads the authoritative list from the public data
+# source before using any model-based predictions.
+FIXED_KNOCKOUT_MATCHUPS = {}
+FIXED_KNOCKOUT_RESULTS = {}
 
 # Official FIFA 2026 Round of 32 third-place assignments for the currently
 # published qualifying combination (groups B, D, E, F, I, J, K, L).

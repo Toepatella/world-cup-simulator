@@ -1,6 +1,7 @@
 import unittest
 
 import bracket
+import data
 
 
 class BracketTests(unittest.TestCase):
@@ -18,6 +19,18 @@ class BracketTests(unittest.TestCase):
             87: "L",
         }
         self.assertEqual(assignment, expected)
+
+    def test_remote_knockout_results_are_parsed_as_authoritative(self):
+        match = {
+            "round": "Round of 32",
+            "team1": "Germany",
+            "team2": "Paraguay",
+            "score": {"ft": [1, 1], "et": [1, 1], "p": [3, 4]},
+        }
+        parsed = data._parse_remote_knockout_result(match)
+        self.assertEqual(parsed[0], 74)
+        self.assertEqual(parsed[1], ("Germany", "Paraguay"))
+        self.assertEqual(parsed[2], ("Paraguay", "Germany"))
 
     def test_fixed_knockout_results_override_predictions(self):
         winners = {
