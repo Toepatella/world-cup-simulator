@@ -87,6 +87,12 @@ FINAL_NO = 104
 THIRD_PLACE_NO = 103
 THIRD_SLOT_NOS = sorted(THIRD_SLOTS.keys())
 
+# Explicit knockout results to reflect known FIFA outcomes in the bracket view.
+# These override the model for the matches where the official result is known.
+FIXED_KNOCKOUT_RESULTS = {
+    74: ("Paraguay", "Germany"),
+}
+
 # Official FIFA 2026 Round of 32 third-place assignments for the currently
 # published qualifying combination (groups B, D, E, F, I, J, K, L).
 # This fixes the current bracket so Germany faces Paraguay (match 74) rather
@@ -163,23 +169,30 @@ def _resolve_r32(spec, winners, runners, thirds_team, third_assignment):
     raise ValueError(spec)
 
 
-def play_bracket_with_matches(winners, runners, thirds_team, third_assignment, win_fn):
+def play_bracket_with_matches(winners, runners, thirds_team, third_assignment,
+                              win_fn, fixed_results=None):
     """Play the full knockout bracket and return every match's participants.
 
     winners/runners/thirds_team: dict group_letter -> team name.
     third_assignment: {slot_match_no -> group_letter} from allocate_thirds.
     win_fn(team_a, team_b) -> (winner, loser).
+    fixed_results: optional {match_no: (winner, loser)} overrides for known
+    FIFA results.
 
     Returns (parts, winner_of, loser_of) where parts is a dict match_no ->
     (home_team, away_team).
     """
     winner_of, loser_of, parts = {}, {}, {}
+    fixed_results = fixed_results or {}
 
     for (no, hspec, aspec) in R32:
         ht = _resolve_r32(hspec, winners, runners, thirds_team, third_assignment)
         at = _resolve_r32(aspec, winners, runners, thirds_team, third_assignment)
         parts[no] = (ht, at)
-        w, l = win_fn(ht, at)
+        if no in fixed_results:
+            w, l = fixed_results[no]
+        else:
+            w, l = win_fn(ht, at)
         winner_of[no], loser_of[no] = w, l
 
     for no in range(89, 105):
@@ -187,15 +200,20 @@ def play_bracket_with_matches(winners, runners, thirds_team, third_assignment, w
         ht = winner_of[hn] if hk == "Wm" else loser_of[hn]
         at = winner_of[an] if ak == "Wm" else loser_of[an]
         parts[no] = (ht, at)
-        w, l = win_fn(ht, at)
+        if no in fixed_results:
+            w, l = fixed_results[no]
+        else:
+            w, l = win_fn(ht, at)
         winner_of[no], loser_of[no] = w, l
 
     return parts, winner_of, loser_of
 
 
-def play_bracket(winners, runners, thirds_team, third_assignment, win_fn):
+def play_bracket(winners, runners, thirds_team, third_assignment, win_fn,
+                 fixed_results=None):
     parts, winner_of, loser_of = play_bracket_with_matches(
-        winners, runners, thirds_team, third_assignment, win_fn)
+        winners, runners, thirds_team, third_assignment, win_fn,
+        fixed_results=fixed_results)
     return {
         "r16": [winner_of[n] for n in R32_NOS],     # reached R16 (won R32)
         "qf": [winner_of[n] for n in R16_NOS],       # reached QF

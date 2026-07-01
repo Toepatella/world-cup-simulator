@@ -320,23 +320,43 @@ def _short_team(team, max_len=20):
 
 
 def _deterministic_bracket(res):
-    """Play one single, internally-consistent bracket: at every step the team
-    that is more likely to win (per the Elo model) is the one that advances.
+    """Play one single, internally-consistent bracket.
 
-    Unlike the simulation-aggregate slot probabilities, this never mixes
-    opponents from different simulated universes, so the path is coherent
-    end to end (e.g. it can't have a weaker team "beat" a stronger one just
-    because of how the random draws landed across iterations).
+    For completed group stages, we use the actual current standings and FIFA
+    2026 tiebreakers so the README bracket reflects the real qualified teams.
+    For incomplete groups, we fall back to the probability-based path used by
+    the Monte Carlo report.
     """
     winners, runners, thirds = {}, {}, {}
-    for g, members in data.GROUPS.items():
-        winners[g] = max(members, key=lambda t: res["p1"][t])
-        runners[g] = max(members, key=lambda t: res["p2"][t])
-        thirds[g] = max(members, key=lambda t: res["p3"][t])
+    group_matches = {g: [m for m in data.MATCHES if m[0] == g] for g in data.GROUPS}
+    all_groups_complete = all(len([m for m in matches if m[3] is not None]) == 6
+                              for matches in group_matches.values())
 
-    # most likely 8 third-placed teams to qualify, ranked by Elo strength
-    qualified_groups = sorted(thirds, key=lambda g: ratings.ELO[thirds[g]],
-                               reverse=True)[:N_ADVANCE_THIRDS]
+    if all_groups_complete:
+        lots = {t: 0.0 for t in data.all_teams()}
+        team_to_group = {}
+        third_entries = []
+        for g, members in data.GROUPS.items():
+            ranked, _ = tb.rank_group(members, group_matches[g],
+                                      ratings.FIFA_POINTS, lots)
+            winners[g] = ranked[0]
+            runners[g] = ranked[1]
+            thirds[g] = ranked[2]
+            third_entries.append((ranked[2], current_standings()[g][ranked[2]]))
+            team_to_group[ranked[2]] = g
+
+        ranked_thirds = tb.rank_best_thirds(third_entries, ratings.FIFA_POINTS, lots)
+        qualified_groups = [team_to_group[team] for team, _ in ranked_thirds[:N_ADVANCE_THIRDS]]
+    else:
+        for g, members in data.GROUPS.items():
+            winners[g] = max(members, key=lambda t: res["p1"][t])
+            runners[g] = max(members, key=lambda t: res["p2"][t])
+            thirds[g] = max(members, key=lambda t: res["p3"][t])
+
+        # most likely 8 third-placed teams to qualify, ranked by Elo strength
+        qualified_groups = sorted(thirds, key=lambda g: ratings.ELO[thirds[g]],
+                                   reverse=True)[:N_ADVANCE_THIRDS]
+
     third_assignment = bracket.allocate_thirds(qualified_groups)
 
     ko_host_adv = res["bracket"].get("ko_host_adv", 0.0)
@@ -351,7 +371,8 @@ def _deterministic_bracket(res):
         return (a, b) if p >= 0.5 else (b, a)
 
     parts, winner_of, loser_of = bracket.play_bracket_with_matches(
-        winners, runners, thirds, third_assignment, win_fn)
+        winners, runners, thirds, third_assignment, win_fn,
+        fixed_results=bracket.FIXED_KNOCKOUT_RESULTS)
 
     win_pct = {}
     for no, (home, away) in parts.items():
