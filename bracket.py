@@ -87,6 +87,23 @@ FINAL_NO = 104
 THIRD_PLACE_NO = 103
 THIRD_SLOT_NOS = sorted(THIRD_SLOTS.keys())
 
+# Official FIFA 2026 Round of 32 third-place assignments for the currently
+# published qualifying combination (groups B, D, E, F, I, J, K, L).
+# This fixes the current bracket so Germany faces Paraguay (match 74) rather
+# than an arbitrary valid-but-non-official third-place pairing.
+OFFICIAL_THIRD_ASSIGNMENTS = {
+    frozenset("BDEFIJKL"): {
+        74: "D",
+        77: "F",
+        79: "E",
+        80: "K",
+        81: "B",
+        82: "I",
+        85: "J",
+        87: "L",
+    },
+}
+
 
 def allocate_thirds(qualified_groups, rng=None):
     """Assign the qualifying third-place GROUPS to the 8 third-place slots.
@@ -94,16 +111,16 @@ def allocate_thirds(qualified_groups, rng=None):
     qualified_groups: iterable of exactly 8 group letters.
     Returns {slot_match_no -> group_letter}.
 
-    Every C(12,8)=495 group-combination admits MORE than one valid matching,
-    and FIFA's exact 495-row lookup table isn't reproduced here. So:
-      * rng given  -> sample a valid matching (randomised search order), which
-        spreads each third over its possible opponents instead of freezing one
-        arbitrary choice. This is what the simulation uses.
-      * rng None    -> deterministic (most-constrained slot first, then
-        alphabetical) -- used by tests / self-check.
-    Either way the official constraints (incl. no same-group rematch) hold.
+    For the currently published 2026 FIFA combination (groups B, D, E, F, I, J,
+    K, L), we use the official FIFA match table so the Round of 32 pairings
+    match the published bracket exactly. For any other combination, we still
+    fall back to a valid matching that satisfies the official constraints.
     """
     qualified = set(qualified_groups)
+    official = OFFICIAL_THIRD_ASSIGNMENTS.get(frozenset(qualified))
+    if official is not None:
+        return dict(official)
+
     if rng is None:
         order = sorted(THIRD_SLOT_NOS,
                        key=lambda s: (len(THIRD_SLOTS[s] & qualified), s))
