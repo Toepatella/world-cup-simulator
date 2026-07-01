@@ -372,7 +372,8 @@ def _deterministic_bracket(res):
 
     parts, winner_of, loser_of = bracket.play_bracket_with_matches(
         winners, runners, thirds, third_assignment, win_fn,
-        fixed_results=bracket.FIXED_KNOCKOUT_RESULTS)
+        fixed_results=bracket.FIXED_KNOCKOUT_RESULTS,
+        fixed_matchups=bracket.FIXED_KNOCKOUT_MATCHUPS)
 
     win_pct = {}
     for no, (home, away) in parts.items():

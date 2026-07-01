@@ -42,10 +42,13 @@ class BracketTests(unittest.TestCase):
             thirds_team,
             third_assignment,
             lambda a, b: (a, b),
-            fixed_results={74: ("Paraguay", "Germany")},
+            fixed_results={74: ("Paraguay", "Germany"), 76: ("Morocco", "Netherlands")},
+            fixed_matchups={74: ("Germany", "Paraguay"), 76: ("Morocco", "Netherlands")},
         )
         self.assertEqual(winner_of[74], "Paraguay")
         self.assertEqual(loser_of[74], "Germany")
+        self.assertEqual(winner_of[76], "Morocco")
+        self.assertEqual(loser_of[76], "Netherlands")
 
 
 if __name__ == "__main__":
