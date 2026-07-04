@@ -236,70 +236,71 @@ def _parse_remote_match(obj):
     return (group, team1, team2, home_goals, away_goals)
 
 
-def _parse_remote_knockout_result(obj):
-    round_name = str(obj.get("round", "")).strip().lower()
-    if not round_name.startswith("round of") and not round_name.startswith("quarter") and \
-       not round_name.startswith("semi") and not round_name.startswith("final"):
-        return None
+_REMOTE_CACHE = None
 
-    team1 = _normalize_team_name(obj.get("team1"))
-    team2 = _normalize_team_name(obj.get("team2"))
-    if not team1 or not team2:
-        return None
 
-    score = obj.get("score") or {}
-    ft = score.get("ft")
-    if not (isinstance(ft, list) and len(ft) >= 2 and ft[0] is not None and ft[1] is not None):
-        return None
+def _fetch_remote_raw(timeout=15):
+    """Fetch (and cache for this process) the full worldcup.json document."""
+    global _REMOTE_CACHE
+    if _REMOTE_CACHE is None:
+        req = urllib.request.Request(
+            REMOTE_JSON_URL,
+            headers={"User-Agent": REMOTE_JSON_USER_AGENT,
+                     "Accept": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            _REMOTE_CACHE = json.load(resp)
+    return _REMOTE_CACHE
 
-    try:
-        home_goals = int(ft[0])
-        away_goals = int(ft[1])
-    except (TypeError, ValueError):
-        return None
 
-    if home_goals == away_goals:
-        penalty_score = score.get("p")
-        if isinstance(penalty_score, list) and len(penalty_score) >= 2:
-            try:
-                home_goals = int(penalty_score[0])
-                away_goals = int(penalty_score[1])
-            except (TypeError, ValueError):
-                return None
-        else:
+def _score_pair(score, key):
+    """Return (a, b) ints for score[key] if it is a valid pair, else None."""
+    v = (score or {}).get(key)
+    if isinstance(v, list) and len(v) >= 2 and v[0] is not None and v[1] is not None:
+        try:
+            return int(v[0]), int(v[1])
+        except (TypeError, ValueError):
             return None
+    return None
 
-    winner, loser = (team1, team2) if home_goals > away_goals else (team2, team1)
 
-    match_no = None
-    known_pairings = {
-        frozenset(("Germany", "Paraguay")): 74,
-        frozenset(("Netherlands", "Morocco")): 76,
-        frozenset(("Mexico", "Ecuador")): 79,
-    }
-    for pair, no in known_pairings.items():
-        if frozenset((team1, team2)) == pair:
-            match_no = no
-            break
+def match_outcome(score):
+    """Resolve a score dict into (result_a, gd, winner).
 
-    if match_no is None:
+    result_a is team1's Elo result (1 win / 0.5 draw / 0 loss); gd is the
+    winning margin used for the Elo goal-difference weight; winner is 0 (team1),
+    1 (team2), or None for a genuine draw. Priority: penalties decide the winner
+    but count as a draw for the rating (level after extra time); otherwise extra
+    time if present, else full time. Returns None if the match is unplayed.
+    """
+    pens = _score_pair(score, "p")
+    if pens is not None:                       # shootout: level after ET
+        return 0.5, 0, (0 if pens[0] > pens[1] else 1)
+    decided = _score_pair(score, "et") or _score_pair(score, "ft")
+    if decided is None:
         return None
+    a, b = decided
+    gd = abs(a - b)
+    if a > b:
+        return 1.0, gd, 0
+    if a < b:
+        return 0.0, gd, 1
+    return 0.5, 0, None
 
-    return (match_no, (team1, team2), (winner, loser))
+
+def _is_knockout_round(round_name):
+    r = (round_name or "").strip().lower()
+    return (r.startswith("round of") or r.startswith("quarter")
+            or r.startswith("semi") or r.startswith("final")
+            or r.startswith("match for third") or r.startswith("third"))
 
 
 def fetch_latest_matches(timeout=15):
     """Fetch the latest group-stage match results from the public worldcup.json file."""
-    req = urllib.request.Request(
-        REMOTE_JSON_URL,
-        headers={"User-Agent": REMOTE_JSON_USER_AGENT,
-                 "Accept": "application/json"}
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        data = json.load(resp)
+    raw = _fetch_remote_raw(timeout=timeout)
 
     matches = []
-    for entry in data.get("matches", []):
+    for entry in raw.get("matches", []):
         parsed = _parse_remote_match(entry)
         if parsed is not None:
             matches.append(parsed)
@@ -311,22 +312,96 @@ def fetch_latest_matches(timeout=15):
     return matches
 
 
-def fetch_latest_knockout_results(timeout=15):
-    """Fetch official knockout results from the public worldcup.json file."""
-    req = urllib.request.Request(
-        REMOTE_JSON_URL,
-        headers={"User-Agent": REMOTE_JSON_USER_AGENT,
-                 "Accept": "application/json"}
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        data = json.load(resp)
+def fetch_played_matches(timeout=15):
+    """Every decided match (group + knockout), in chronological order.
 
+    Returned as dicts consumed by ratings.live_ratings: team1, team2, result_a,
+    gd, round, and host1/host2 flags (a host nation plays its group games at
+    home, so it gets the venue boost in the rating update). Ordered by date so
+    ratings can be updated after every game.
+    """
+    raw = _fetch_remote_raw(timeout=timeout)
+    valid = set(all_teams())
+    out = []
+    for entry in raw.get("matches", []):
+        t1 = _normalize_team_name(entry.get("team1"))
+        t2 = _normalize_team_name(entry.get("team2"))
+        if t1 not in valid or t2 not in valid:      # skips "W89"/"L101" placeholders
+            continue
+        outcome = match_outcome(entry.get("score"))
+        if outcome is None:
+            continue
+        result_a, gd, _winner = outcome
+        round_name = str(entry.get("round", "")).strip()
+        is_group = not _is_knockout_round(round_name)
+        out.append({
+            "team1": t1, "team2": t2,
+            "result_a": result_a, "gd": gd,
+            "round": round_name,
+            "host1": is_group and t1 in HOSTS,
+            "host2": is_group and t2 in HOSTS,
+            "date": entry.get("date", ""),
+            "num": entry.get("num") or 0,
+        })
+    out.sort(key=lambda m: (m["date"], m["num"], m["team1"]))
+    return out
+
+
+def played_matches_chrono(timeout=15):
+    """Chronological decided matches for rating updates, with a local fallback.
+
+    Prefers the remote feed (full detail: extra time, penalties, knockout
+    rounds). If it is unreachable, falls back to the local group-stage MATCHES.
+    """
+    try:
+        return fetch_played_matches(timeout=timeout)
+    except Exception:
+        out = []
+        for (g, h, a, hs, as_) in MATCHES:
+            if hs is None:
+                continue
+            gd = abs(hs - as_)
+            result_a = 1.0 if hs > as_ else (0.0 if hs < as_ else 0.5)
+            out.append({
+                "team1": h, "team2": a,
+                "result_a": result_a, "gd": gd,
+                "round": g,
+                "host1": h in HOSTS, "host2": a in HOSTS,
+                "date": "", "num": 0,
+            })
+        return out
+
+
+def official_knockout_results(timeout=15):
+    """Played knockout matches as (round, team1, team2, winner, loser).
+
+    Only real teams count (placeholder slots like "W89" are skipped) and only
+    matches with a decided result are returned. Callers apply these by
+    participant identity, so no bracket-slot numbers are needed here.
+    """
+    try:
+        raw = _fetch_remote_raw(timeout=timeout)
+    except Exception:
+        return []
+    valid = set(all_teams())
     results = []
-    for entry in data.get("matches", []):
-        parsed = _parse_remote_knockout_result(entry)
-        if parsed is not None:
-            results.append(parsed)
-    results.sort(key=lambda item: item[0])
+    for entry in raw.get("matches", []):
+        round_name = str(entry.get("round", "")).strip()
+        if not _is_knockout_round(round_name):
+            continue
+        t1 = _normalize_team_name(entry.get("team1"))
+        t2 = _normalize_team_name(entry.get("team2"))
+        if t1 not in valid or t2 not in valid:
+            continue
+        outcome = match_outcome(entry.get("score"))
+        if outcome is None:
+            continue
+        _result_a, _gd, winner = outcome
+        if winner is None:                          # a knockout must have a winner
+            continue
+        w = t1 if winner == 0 else t2
+        l = t2 if winner == 0 else t1
+        results.append((round_name, t1, t2, w, l))
     return results
 
 

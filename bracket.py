@@ -87,12 +87,12 @@ FINAL_NO = 104
 THIRD_PLACE_NO = 103
 THIRD_SLOT_NOS = sorted(THIRD_SLOTS.keys())
 
-# Explicit knockout pairings/results to reflect known FIFA outcomes in the
-# bracket view. These override the model for matches where the official data is
-# known. The simulator now loads the authoritative list from the public data
-# source before using any model-based predictions.
-FIXED_KNOCKOUT_MATCHUPS = {}
-FIXED_KNOCKOUT_RESULTS = {}
+# Official knockout results are applied by PARTICIPANT identity, not by bracket
+# slot number: the seeding (group winners/runners/thirds -> R32 template) fully
+# determines who meets whom, and a played game's winner is looked up from the
+# {frozenset({team_a, team_b}): winner} map the simulator builds from the public
+# data source. This keeps the official results consistent with the seeding
+# instead of forcing team pairs into fixed slots (which double-booked teams).
 
 # Official FIFA 2026 Round of 32 third-place assignments for the currently
 # published qualifying combination (groups B, D, E, F, I, J, K, L).
@@ -171,55 +171,49 @@ def _resolve_r32(spec, winners, runners, thirds_team, third_assignment):
 
 
 def play_bracket_with_matches(winners, runners, thirds_team, third_assignment,
-                              win_fn, fixed_results=None,
-                              fixed_matchups=None):
+                              win_fn, fixed_winners=None):
     """Play the full knockout bracket and return every match's participants.
 
     winners/runners/thirds_team: dict group_letter -> team name.
     third_assignment: {slot_match_no -> group_letter} from allocate_thirds.
-    win_fn(team_a, team_b) -> (winner, loser).
-    fixed_results: optional {match_no: (winner, loser)} overrides for known
-    FIFA results.
+    win_fn(team_a, team_b) -> (winner, loser)  for matches without a result.
+    fixed_winners: optional {frozenset({team_a, team_b}): winner} of already
+    played knockout games; a match whose seeded participants match a key uses
+    the official winner, everything else is predicted by win_fn.
 
     Returns (parts, winner_of, loser_of) where parts is a dict match_no ->
     (home_team, away_team).
     """
     winner_of, loser_of, parts = {}, {}, {}
-    fixed_results = fixed_results or {}
-    fixed_matchups = fixed_matchups or {}
+    fixed_winners = fixed_winners or {}
+
+    def decide(ht, at):
+        w = fixed_winners.get(frozenset((ht, at)))
+        if w in (ht, at):                      # official result for this pairing
+            return w, (at if w == ht else ht)
+        return win_fn(ht, at)                   # not yet played -> predict
 
     for (no, hspec, aspec) in R32:
-        if no in fixed_matchups:
-            ht, at = fixed_matchups[no]
-        else:
-            ht = _resolve_r32(hspec, winners, runners, thirds_team, third_assignment)
-            at = _resolve_r32(aspec, winners, runners, thirds_team, third_assignment)
+        ht = _resolve_r32(hspec, winners, runners, thirds_team, third_assignment)
+        at = _resolve_r32(aspec, winners, runners, thirds_team, third_assignment)
         parts[no] = (ht, at)
-        if no in fixed_results:
-            w, l = fixed_results[no]
-        else:
-            w, l = win_fn(ht, at)
-        winner_of[no], loser_of[no] = w, l
+        winner_of[no], loser_of[no] = decide(ht, at)
 
     for no in range(89, 105):
         (hk, hn), (ak, an) = LATER[no]
         ht = winner_of[hn] if hk == "Wm" else loser_of[hn]
         at = winner_of[an] if ak == "Wm" else loser_of[an]
         parts[no] = (ht, at)
-        if no in fixed_results:
-            w, l = fixed_results[no]
-        else:
-            w, l = win_fn(ht, at)
-        winner_of[no], loser_of[no] = w, l
+        winner_of[no], loser_of[no] = decide(ht, at)
 
     return parts, winner_of, loser_of
 
 
 def play_bracket(winners, runners, thirds_team, third_assignment, win_fn,
-                 fixed_results=None, fixed_matchups=None):
+                 fixed_winners=None):
     parts, winner_of, loser_of = play_bracket_with_matches(
         winners, runners, thirds_team, third_assignment, win_fn,
-        fixed_results=fixed_results, fixed_matchups=fixed_matchups)
+        fixed_winners=fixed_winners)
     return {
         "r16": [winner_of[n] for n in R32_NOS],     # reached R16 (won R32)
         "qf": [winner_of[n] for n in R16_NOS],       # reached QF

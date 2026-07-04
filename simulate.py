@@ -48,7 +48,7 @@ def build_remaining(mu, sup_scale, host_adv):
     for (_g, home, away) in rem:
         ha = host_adv if home in data.HOSTS else 0.0
         hb = host_adv if away in data.HOSTS else 0.0
-        a, b = lambdas(ratings.ELO[home], ratings.ELO[away], mu, sup_scale, ha, hb)
+        a, b = lambdas(ratings.RATING[home], ratings.RATING[away], mu, sup_scale, ha, hb)
         la.append(a); lb.append(b)
     return rem, np.array(la), np.array(lb)
 
@@ -91,12 +91,11 @@ def simulate(iters, seed, mu, sup_scale, host_adv, ko_host_adv=KO_HOST_ADV_DEFAU
     ag = rng.poisson(lb[:, None], size=(n_rem, iters))   # away goals
     lots_all = rng.random((iters, len(teams)))           # final-resort random lot
 
-    official_knockout = data.fetch_latest_knockout_results()
-    fixed_results = {}
-    fixed_matchups = {}
-    for match_no, matchup, result in official_knockout:
-        fixed_matchups[match_no] = matchup
-        fixed_results[match_no] = result
+    # Official knockout results, keyed by the pair of teams that played, so they
+    # attach to whichever bracket slot the seeding puts that pairing in.
+    fixed_winners = {frozenset((t1, t2)): winner
+                     for (_round, t1, t2, winner, _loser)
+                     in data.official_knockout_results()}
 
     # pre-split fixtures by group: fixed (played) tuples + remaining indices
     group_fixed = {g: [(gg, h, a, hs, as_) for (gg, h, a, hs, as_) in data.MATCHES
@@ -119,8 +118,8 @@ def simulate(iters, seed, mu, sup_scale, host_adv, ko_host_adv=KO_HOST_ADV_DEFAU
     champ = {t: 0 for t in teams}
     runner_up = {t: 0 for t in teams}
 
-    fifa = ratings.FIFA_POINTS
-    elo = ratings.ELO
+    fifa = ratings.RATING       # live FIFA ranking = the seeding tiebreaker too
+    elo = ratings.RATING        # ...and the rating that drives win probability
     hosts = data.HOSTS
     groups = list(data.GROUPS.keys())
 
@@ -176,8 +175,7 @@ def simulate(iters, seed, mu, sup_scale, host_adv, ko_host_adv=KO_HOST_ADV_DEFAU
         third_assignment = bracket.allocate_thirds(qualified_groups, rng)
         parts, winner_of, loser_of = bracket.play_bracket_with_matches(
             winners, runners, thirds_team, third_assignment, win_fn,
-            fixed_results=fixed_results,
-            fixed_matchups=fixed_matchups)
+            fixed_winners=fixed_winners)
         for no, (home, away) in parts.items():
             home_slot_counts[no][home] += 1
             away_slot_counts[no][away] += 1
@@ -347,14 +345,14 @@ def _deterministic_bracket(res):
         third_entries = []
         for g, members in data.GROUPS.items():
             ranked, _ = tb.rank_group(members, group_matches[g],
-                                      ratings.FIFA_POINTS, lots)
+                                      ratings.RATING, lots)
             winners[g] = ranked[0]
             runners[g] = ranked[1]
             thirds[g] = ranked[2]
             third_entries.append((ranked[2], current_standings()[g][ranked[2]]))
             team_to_group[ranked[2]] = g
 
-        ranked_thirds = tb.rank_best_thirds(third_entries, ratings.FIFA_POINTS, lots)
+        ranked_thirds = tb.rank_best_thirds(third_entries, ratings.RATING, lots)
         qualified_groups = [team_to_group[team] for team, _ in ranked_thirds[:N_ADVANCE_THIRDS]]
     else:
         for g, members in data.GROUPS.items():
@@ -362,8 +360,8 @@ def _deterministic_bracket(res):
             runners[g] = max(members, key=lambda t: res["p2"][t])
             thirds[g] = max(members, key=lambda t: res["p3"][t])
 
-        # most likely 8 third-placed teams to qualify, ranked by Elo strength
-        qualified_groups = sorted(thirds, key=lambda g: ratings.ELO[thirds[g]],
+        # most likely 8 third-placed teams to qualify, ranked by live rating
+        qualified_groups = sorted(thirds, key=lambda g: ratings.RATING[thirds[g]],
                                    reverse=True)[:N_ADVANCE_THIRDS]
 
     third_assignment = bracket.allocate_thirds(qualified_groups)
@@ -371,31 +369,33 @@ def _deterministic_bracket(res):
     ko_host_adv = res["bracket"].get("ko_host_adv", 0.0)
 
     def elo_win_prob(a, b):
-        ea = ratings.ELO[a] + (ko_host_adv if a in data.HOSTS else 0.0)
-        eb = ratings.ELO[b] + (ko_host_adv if b in data.HOSTS else 0.0)
+        ea = ratings.RATING[a] + (ko_host_adv if a in data.HOSTS else 0.0)
+        eb = ratings.RATING[b] + (ko_host_adv if b in data.HOSTS else 0.0)
         return 1.0 / (1.0 + 10.0 ** (-(ea - eb) / 400.0))
 
     def win_fn(a, b):
         p = elo_win_prob(a, b)
         return (a, b) if p >= 0.5 else (b, a)
 
-    fixed_results = {}
-    fixed_matchups = {}
-    for match_no, matchup, result in data.fetch_latest_knockout_results():
-        fixed_matchups[match_no] = matchup
-        fixed_results[match_no] = result
+    fixed_winners = {frozenset((t1, t2)): winner
+                     for (_round, t1, t2, winner, _loser)
+                     in data.official_knockout_results()}
 
     parts, winner_of, loser_of = bracket.play_bracket_with_matches(
         winners, runners, thirds, third_assignment, win_fn,
-        fixed_results=fixed_results,
-        fixed_matchups=fixed_matchups)
+        fixed_winners=fixed_winners)
 
     win_pct = {}
     for no, (home, away) in parts.items():
         p_home = elo_win_prob(home, away)
         win_pct[no] = {home: p_home, away: 1.0 - p_home}
 
-    return parts, winner_of, loser_of, win_pct
+    # Matches whose exact pairing has an official result (already played) rather
+    # than a model prediction -- used to flag them in the bracket view.
+    played = {no for no, (home, away) in parts.items()
+              if frozenset((home, away)) in fixed_winners}
+
+    return parts, winner_of, loser_of, win_pct, played
 
 
 _BOX_NAMEW = 16
@@ -403,9 +403,11 @@ _BOX_WIDTH = _BOX_NAMEW + 1 + 7 + 2  # marker+space+name+space+pct, padded
 _GAP = 4  # spaces between a match box and the box it feeds into
 
 
-def _box_lines(parts, winner_of, win_pct, no):
+def _box_lines(parts, winner_of, win_pct, no, played=()):
     """A single match as a 5-line box: stage label, then a bordered card with
-    both teams and their Elo win probabilities; '>' marks who advances."""
+    both teams and their win probabilities; '>' marks who advances. Played
+    matches (official results) are tagged '*' on the stage label -- there the
+    probabilities are the model's view and '>' is the real winner."""
     home, away = parts[no]
     winner = winner_of[no]
     border = "+" + "-" * _BOX_WIDTH + "+"
@@ -415,11 +417,12 @@ def _box_lines(parts, winner_of, win_pct, no):
         pct = fmt_pct(win_pct[no][t])
         row = f"{mark} {_short_team(t, _BOX_NAMEW):<{_BOX_NAMEW}} {pct:>7}"
         rows.append(f"|{row:<{_BOX_WIDTH}}|")
-    return [_stage_label(no), border, rows[0], rows[1], border]
+    label = _stage_label(no) + ("*" if no in played else "")
+    return [label, border, rows[0], rows[1], border]
 
 
-def _leaf(parts, winner_of, win_pct, no):
-    lines = _box_lines(parts, winner_of, win_pct, no)
+def _leaf(parts, winner_of, win_pct, no, played=()):
+    lines = _box_lines(parts, winner_of, win_pct, no, played)
     width = max(len(l) for l in lines)
     return {"lines": [l.ljust(width) for l in lines], "width": width, "anchor": len(lines) // 2}
 
@@ -458,26 +461,27 @@ def _hmerge(top, bottom, parent_lines):
     return {"lines": new_lines, "width": width + _GAP + box_w, "anchor": start + box_anchor}
 
 
-def _r16_group(parts, winner_of, win_pct, r32a, r32b, r16):
-    leaf_a = _leaf(parts, winner_of, win_pct, r32a)
-    leaf_b = _leaf(parts, winner_of, win_pct, r32b)
-    box16 = _box_lines(parts, winner_of, win_pct, r16)
+def _r16_group(parts, winner_of, win_pct, r32a, r32b, r16, played=()):
+    leaf_a = _leaf(parts, winner_of, win_pct, r32a, played)
+    leaf_b = _leaf(parts, winner_of, win_pct, r32b, played)
+    box16 = _box_lines(parts, winner_of, win_pct, r16, played)
     return _hmerge(leaf_a, leaf_b, box16)
 
 
-def _qf_group(parts, winner_of, win_pct, g1, g2, qf):
-    grp_a = _r16_group(parts, winner_of, win_pct, *g1)
-    grp_b = _r16_group(parts, winner_of, win_pct, *g2)
-    boxqf = _box_lines(parts, winner_of, win_pct, qf)
+def _qf_group(parts, winner_of, win_pct, g1, g2, qf, played=()):
+    grp_a = _r16_group(parts, winner_of, win_pct, *g1, played=played)
+    grp_b = _r16_group(parts, winner_of, win_pct, *g2, played=played)
+    boxqf = _box_lines(parts, winner_of, win_pct, qf, played)
     return _hmerge(grp_a, grp_b, boxqf)
 
 
 def _format_bracket_ascii(res):
-    """Deterministic ASCII knockout bracket: every match is a card showing
-    each team's Elo-model win probability, and the favorite ('>') is the one
-    carried into the next round, laid out as a standard left-to-right
-    tournament tree (each round's box centered between its two feeders)."""
-    parts, winner_of, loser_of, win_pct = _deterministic_bracket(res)
+    """Deterministic ASCII knockout bracket: official results (already played)
+    are seeded in and tagged '*'; every unplayed match shows each team's live
+    model win probability with the favorite ('>') carried into the next round.
+    Laid out as a standard left-to-right tree (each round centered on its two
+    feeders)."""
+    parts, winner_of, loser_of, win_pct, played = _deterministic_bracket(res)
 
     # (R32 a, R32 b, R16) feeding each quarterfinal, paired by semifinal
     quarters = [
@@ -487,20 +491,25 @@ def _format_bracket_ascii(res):
         ((86, 88, 95), (85, 87, 96), 100),
     ]
 
-    qf_trees = [_qf_group(parts, winner_of, win_pct, g1, g2, qf) for (g1, g2, qf) in quarters]
+    qf_trees = [_qf_group(parts, winner_of, win_pct, g1, g2, qf, played)
+                for (g1, g2, qf) in quarters]
 
-    sf_box_1 = _box_lines(parts, winner_of, win_pct, 101)
-    sf_box_2 = _box_lines(parts, winner_of, win_pct, 102)
+    sf_box_1 = _box_lines(parts, winner_of, win_pct, 101, played)
+    sf_box_2 = _box_lines(parts, winner_of, win_pct, 102, played)
     sf_tree_1 = _hmerge(qf_trees[0], qf_trees[1], sf_box_1)
     sf_tree_2 = _hmerge(qf_trees[2], qf_trees[3], sf_box_2)
 
-    final_box = _box_lines(parts, winner_of, win_pct, bracket.FINAL_NO)
+    final_box = _box_lines(parts, winner_of, win_pct, bracket.FINAL_NO, played)
     final_tree = _hmerge(sf_tree_1, sf_tree_2, final_box)
 
-    lines = ["## Knockout bracket (most-likely-winner path)", "", "```text"]
+    n_played = len(played)
+    lines = ["## Knockout bracket (official results seeded, rest predicted)", "",
+             f"`*` = official result already played ({n_played} matches); "
+             "unmarked matches show the live-rating model's win probabilities, "
+             "with `>` marking the projected winner.", "", "```text"]
     lines += final_tree["lines"]
     lines.append("")
-    lines += _box_lines(parts, winner_of, win_pct, bracket.THIRD_PLACE_NO)
+    lines += _box_lines(parts, winner_of, win_pct, bracket.THIRD_PLACE_NO, played)
     lines.append("")
     lines.append(f"Champion: {winner_of[bracket.FINAL_NO]}")
     lines.append("```")
@@ -566,15 +575,17 @@ def print_report(res, iters, mu, sup_scale, host_adv):
     # ---- group stage ----
     gcols = ["1st", "2nd", "3rd", "Best3", "Advance"]
     gw = [9, 9, 9, 9, 10]
-    ghead = (f"{'Team':<{TEAMW}}{'Elo':>6}{'Pld':>5}{'Pts':>5}{'GD':>5}"
+    ghead = (f"{'Team':<{TEAMW}}{'FIFA':>8}{'Pld':>5}{'Pts':>5}{'GD':>5}"
              + "".join(f"{c:>{w}}" for c, w in zip(gcols, gw)))
     banner = "=" * len(ghead)
 
     snapshot_date = _snapshot_date()
     print("\n" + banner)
     print("2026 FIFA WORLD CUP  -  MONTE CARLO TOURNAMENT PROBABILITIES")
-    print(f"{iters:,} sims | Elo->Poisson (mu={mu}, sup_scale={sup_scale:.4f}, "
+    print(f"{iters:,} sims | live FIFA-rating->Poisson (mu={mu}, sup_scale={sup_scale:.4f}, "
           f"host +{host_adv:.0f}) | FIFA-2026 tiebreakers | snapshot {snapshot_date}")
+    print("FIFA = live FIFA World Ranking points (updated after every match); "
+          "also the rating that drives win probability.")
     print(banner)
     print("\nGROUP STAGE   probability of finishing 1st / 2nd / 3rd, qualifying "
           "as a best third, and advancing")
@@ -587,12 +598,12 @@ def print_report(res, iters, mu, sup_scale, host_adv):
         print("-" * len(ghead))
         for t in order:
             s = tbl[t]
-            head = (f"{t:<{TEAMW}}{ratings.ELO[t]:>6}{s['pld']:>5}{s['pts']:>5}"
+            head = (f"{t:<{TEAMW}}{ratings.RATING[t]:>8.2f}{s['pld']:>5}{s['pts']:>5}"
                     f"{s['gd']:>+5}")
             cells = [fmt_pct(res[k][t]) for k in ("p1", "p2", "p3", "pq3", "adv")]
             print(head + "".join(f"{c:>{w}}" for c, w in zip(cells, gw)))
             csv_rows.append(dict(
-                group=g, team=t, elo=ratings.ELO[t], played=s["pld"],
+                group=g, team=t, rating=round(ratings.RATING[t], 2), played=s["pld"],
                 points=s["pts"], gd=s["gd"], gf=s["gf"],
                 p_first=round(res["p1"][t], 4), p_second=round(res["p2"][t], 4),
                 p_third=round(res["p3"][t], 4),
@@ -632,10 +643,11 @@ def print_report(res, iters, mu, sup_scale, host_adv):
         cells = [fmt_pct(res[k][t]) for k in ("adv", "r16", "qf", "sf", "final", "champ")]
         print(_prow(t, cells, kw))
 
-    print("\nKNOCKOUT BRACKET   most-likely-winner path")
+    print("\nKNOCKOUT BRACKET   official results seeded, rest predicted")
     for line in _format_bracket_ascii(res):
-        if line not in ("## Knockout bracket (most-likely-winner path)", "```text", "```"):
-            print(line)
+        if line.startswith("## ") or line in ("```text", "```"):
+            continue
+        print(line)
 
     if res.get("team_summary"):
         ts = res["team_summary"]
@@ -662,16 +674,18 @@ def _write_markdown(res, stand, iters, mu, sup_scale, host_adv):
     snapshot_date = _snapshot_date()
     lines = [
         "# 2026 FIFA World Cup - group-stage advancement probabilities", "",
-        f"- Simulations: **{iters:,}** | Model: World Football Elo -> independent "
-        f"Poisson | mu={mu}, sup_scale={sup_scale:.4f}, host advantage=+{host_adv:.0f} Elo",
+        f"- Simulations: **{iters:,}** | Model: live FIFA World Ranking (updated "
+        f"after every match) used as the Elo rating -> independent "
+        f"Poisson | mu={mu}, sup_scale={sup_scale:.4f}, host advantage=+{host_adv:.0f}",
         f"- Tiebreakers: FIFA 2026 (head-to-head first). Snapshot: {snapshot_date}.",
+        "- FIFA = live FIFA ranking points (2 decimals); official results are fixed, the rest is predicted.",
         "- ADV = P(1st) + P(2nd) + P(qualify as one of the 8 best third-placed teams).",
         "",
     ]
 
     gcols = ["1st", "2nd", "3rd", "Best3", "Advance"]
     gw = [9, 9, 9, 9, 10]
-    ghead = (f"{'Team':<{TEAMW}}{'Elo':>6}{'Pld':>5}{'Pts':>5}{'GD':>5}"
+    ghead = (f"{'Team':<{TEAMW}}{'FIFA':>8}{'Pld':>5}{'Pts':>5}{'GD':>5}"
              + "".join(f"{c:>{w}}" for c, w in zip(gcols, gw)))
     banner = "=" * len(ghead)
 
@@ -680,11 +694,11 @@ def _write_markdown(res, stand, iters, mu, sup_scale, host_adv):
         lines += [f"## Group {g}", "", "```text", ghead, banner]
         for t in order:
             s = stand[g][t]
-            lines.append(_prow(t, [ratings.ELO[t], s["pld"], s["pts"], s["gd"],
+            lines.append(_prow(t, [f"{ratings.RATING[t]:.2f}", s["pld"], s["pts"], s["gd"],
                                    fmt_pct(res["p1"][t]), fmt_pct(res["p2"][t]),
                                    fmt_pct(res["p3"][t]), fmt_pct(res["pq3"][t]),
                                    fmt_pct(res["adv"][t])],
-                                  [6, 5, 5, 5] + gw))
+                                  [8, 5, 5, 5] + gw))
         lines += ["```", ""]
 
     lines += ["## Best-third race (8 of the 12 third-placed teams advance)", "", "```text"]
@@ -747,6 +761,12 @@ def _format_readme_headline(res, stand, iters, snapshot_date):
     lines = []
     lines.append(f"## Headline results ({iters:,} simulations)")
     lines.append("")
+    lines.append("Official results (group stage and any completed knockout rounds) are seeded in "
+                 "as fixed; every unplayed match is predicted. Predictions use the **live FIFA "
+                 "World Ranking** as the rating — every team starts at its pre-tournament FIFA "
+                 "points and the rating is updated after every played match (Elo-style: "
+                 "`r += K·(W − We)`), so a team that wins carries the bump into its next tie.")
+    lines.append("")
     lines.append("### Title odds — probability of reaching each knockout round (and winning)")
     lines.append("Sorted by championship %. `R32` = reach the knockout stage at all.")
     lines.append("")
@@ -765,18 +785,19 @@ def _format_readme_headline(res, stand, iters, snapshot_date):
     lines.append("")
     lines += _format_bracket_ascii(res)
     lines.append("### Group-stage advancement")
-    lines.append("`ADV` = P(1st) + P(2nd) + P(qualify as one of the 8 best thirds). Sorted by ADV.")
+    lines.append("`FIFA` = live FIFA World Ranking points (2 decimals), updated after every match. "
+                 "`ADV` = P(1st) + P(2nd) + P(qualify as one of the 8 best thirds). Sorted by ADV.")
     lines.append("Full machine-readable table: [`output/group_probabilities.csv`](output/group_probabilities.csv).")
     lines.append("")
     for g, members in data.GROUPS.items():
         lines.append(f"### Group {g}")
-        lines.append("| Team | Elo | Pld | Pts | GD | 1st | 2nd | 3rd | Best-3 | **Advance** |")
+        lines.append("| Team | FIFA | Pld | Pts | GD | 1st | 2nd | 3rd | Best-3 | **Advance** |")
         lines.append("|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|")
         order = _standings_order(members, stand[g])
         for t in order:
             s = stand[g][t]
             lines.append(
-                f"| {t} | {ratings.ELO[t]} | {s['pld']} | {s['pts']} | {s['gd']:+d} | "
+                f"| {t} | {ratings.RATING[t]:.2f} | {s['pld']} | {s['pts']} | {s['gd']:+d} | "
                 f"{fmt_pct(res['p1'][t])} | {fmt_pct(res['p2'][t])} | {fmt_pct(res['p3'][t])} | "
                 f"{fmt_pct(res['pq3'][t])} | **{fmt_pct(res['adv'][t])}** |"
             )
@@ -800,30 +821,18 @@ def _update_readme(res, stand, iters, mu, sup_scale, host_adv):
     content = _update_readme_snapshot(content, snapshot_date)
     content = _update_readme_sources(content, snapshot_date)
 
-    marker_re = re.compile(r"^##\s*(?:\d+\.\s*)?Headline results.*$", re.M)
-    m = marker_re.search(content)
-    if not m:
-        raise RuntimeError("Could not find README headline results section to update")
-    content = content[:m.start()]
-
-    hr_match = re.search(r"^---\s*$", content, re.M)
+    # The file is top matter (intro + a bare '---' rule) followed by a fully
+    # generated results block. Rebuild that block from scratch each run so the
+    # update is idempotent -- appending in place used to accumulate blank lines.
+    hr_match = re.search(r"^---[ \t]*$", content, re.M)
     if not hr_match:
-        raise RuntimeError("Could not find README top section separator to insert headline results")
-    insert_idx = content.find("\n", hr_match.end())
-    if insert_idx == -1:
-        insert_idx = len(content)
-    else:
-        insert_idx += 1
+        raise RuntimeError("Could not find README top section separator ('---')")
+    head = content[:hr_match.end()].rstrip() + "\n"
+    report = _format_readme_headline(res, stand, iters, snapshot_date).strip("\n")
+    content = head + "\n" + report + "\n"
 
-    content = (
-        content[:insert_idx]
-        + "\n"
-        + _format_readme_headline(res, stand, iters, snapshot_date)
-        + "\n"
-        + content[insert_idx:]
-    )
-
-    with open(path, "w", encoding="utf-8") as f:
+    # Force LF so the file does not end up with mixed CRLF/LF line endings.
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write(content)
     print(f"Updated {path}")
 
@@ -851,6 +860,14 @@ def main():
     ratings.check_complete(data.all_teams())
     if args.no_h2h_first:
         tb.set_h2h_first(False)
+
+    # Live rating: start at the pre-tournament FIFA ranking and update it after
+    # every played match (group + knockout). This is the rating the model then
+    # uses to predict the unplayed games.
+    played = data.played_matches_chrono()
+    ratings.update_live(played, base=ratings.FIFA_POINTS, host_adv=args.host_adv)
+    print(f"Updated FIFA rating from {len(played)} played matches "
+          f"(base snapshot {ratings.FIFA_AS_OF}).")
 
     if args.sup_scale is not None:
         sup_scale = args.sup_scale
