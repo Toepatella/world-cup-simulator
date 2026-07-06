@@ -1,7 +1,7 @@
 # 2026 FIFA World Cup - group-stage advancement probabilities
 
 - Simulations: **50,000** | Model: live FIFA World Ranking (updated after every match) used as the Elo rating -> independent Poisson | mu=2.75, sup_scale=0.0058, host advantage=+70
-- Tiebreakers: FIFA 2026 (head-to-head first). Snapshot: 2026-07-05.
+- Tiebreakers: FIFA 2026 (head-to-head first). Snapshot: 2026-07-06.
 - FIFA = live FIFA ranking points (2 decimals); official results are fixed, the rest is predicted.
 - ADV = P(1st) + P(2nd) + P(qualify as one of the 8 best third-placed teams).
 
@@ -87,7 +87,7 @@ New Zealand              1275.10    3    1   -6    0.00%    0.00%    0.00%    0.
 ```text
 Team                        FIFA  Pld  Pts   GD      1st      2nd      3rd    Best3   Advance
 =============================================================================================
-Spain                    1886.49    3    7    5  100.00%    0.00%    0.00%    0.00%   100.00%
+Spain                    1904.29    3    7    5  100.00%    0.00%    0.00%    0.00%   100.00%
 Cape Verde               1408.36    3    3    0    0.00%  100.00%    0.00%    0.00%   100.00%
 Uruguay                  1630.60    3    2   -1    0.00%    0.00%  100.00%    0.00%     0.00%
 Saudi Arabia             1429.74    3    2   -4    0.00%    0.00%    0.00%    0.00%     0.00%
@@ -121,7 +121,7 @@ Jordan                   1354.68    3    0   -5    0.00%    0.00%    0.00%    0.
 Team                        FIFA  Pld  Pts   GD      1st      2nd      3rd    Best3   Advance
 =============================================================================================
 Colombia                 1733.82    3    7    3  100.00%    0.00%    0.00%    0.00%   100.00%
-Portugal                 1783.54    3    5    5    0.00%  100.00%    0.00%    0.00%   100.00%
+Portugal                 1765.74    3    5    5    0.00%  100.00%    0.00%    0.00%   100.00%
 DR Congo                 1506.13    3    4    1    0.00%    0.00%  100.00%  100.00%   100.00%
 Uzbekistan               1397.09    3    0   -9    0.00%    0.00%    0.00%    0.00%     0.00%
 ```
@@ -161,27 +161,27 @@ Uruguay                    100.00%       0.00%       0.00%
 ```text
 Team                          R32      R16       QF       SF    Final      WIN
 ------------------------------------------------------------------------------
-France                    100.00%  100.00%  100.00%   68.03%   44.31%   26.61%
-Argentina                 100.00%  100.00%   86.29%   64.51%   40.09%   22.42%
-England                   100.00%  100.00%  100.00%   76.22%   40.78%   20.10%
-Spain                     100.00%  100.00%   64.19%   45.88%   23.29%   12.88%
-Morocco                   100.00%  100.00%  100.00%   31.97%   14.92%    6.24%
-Portugal                  100.00%  100.00%   35.81%   20.86%    7.77%    3.27%
-Belgium                   100.00%  100.00%   58.31%   21.20%    6.66%    2.36%
-Colombia                  100.00%  100.00%   53.74%   17.41%    6.69%    2.13%
-Norway                    100.00%  100.00%  100.00%   23.78%    6.59%    1.58%
-Switzerland               100.00%  100.00%   46.26%   13.70%    4.84%    1.35%
-United States             100.00%  100.00%   41.69%   12.07%    3.06%    0.90%
-Egypt                     100.00%  100.00%   13.71%    4.38%    1.01%    0.15%
+France                    100.00%  100.00%  100.00%   68.34%   40.30%   24.15%
+Spain                     100.00%  100.00%  100.00%   73.67%   38.73%   22.25%
+Argentina                 100.00%  100.00%   86.25%   64.27%   39.58%   20.93%
+England                   100.00%  100.00%  100.00%   76.26%   41.05%   19.35%
+Morocco                   100.00%  100.00%  100.00%   31.66%   13.20%    5.56%
+Belgium                   100.00%  100.00%   59.04%   17.23%    5.59%    2.10%
+Colombia                  100.00%  100.00%   53.65%   17.63%    6.62%    2.10%
+Norway                    100.00%  100.00%  100.00%   23.74%    6.85%    1.53%
+Switzerland               100.00%  100.00%   46.35%   13.73%    4.92%    1.28%
+United States             100.00%  100.00%   40.96%    9.10%    2.18%    0.58%
+Egypt                     100.00%  100.00%   13.75%    4.37%    0.98%    0.18%
 Mexico                    100.00%  100.00%    0.00%    0.00%    0.00%    0.00%
 Canada                    100.00%  100.00%    0.00%    0.00%    0.00%    0.00%
 Brazil                    100.00%  100.00%    0.00%    0.00%    0.00%    0.00%
 Paraguay                  100.00%  100.00%    0.00%    0.00%    0.00%    0.00%
+Portugal                  100.00%  100.00%    0.00%    0.00%    0.00%    0.00%
 ```
 
 ## Knockout bracket (official results seeded, rest predicted)
 
-`*` = official result already played (20 matches); unmarked matches show the live-rating model's win probabilities, with `>` marking the projected winner.
+`*` = official result already played (21 matches); unmarked matches show the live-rating model's win probabilities, with `>` marking the projected winner.
 
 ```text
 R32*                                                                                                                                                        
@@ -203,18 +203,18 @@ R32*                            |> Morocco           80.16%|
 +--------------------------+    +--------------------------+                                                                                                
 |  Netherlands       48.05%|                                                                    SF                                                          
 |> Morocco           51.95%|                                                                    +--------------------------+                                
-+--------------------------+                                                                    |> France            55.40%|                                
-R32*                                                                                            |  Spain             44.60%|                                
++--------------------------+                                                                    |> France            52.86%|                                
+R32*                                                                                            |  Spain             47.14%|                                
 +--------------------------+                                                                    +--------------------------+                                
-|> Portugal          63.37%|    R16                                                                                                                         
-|  Croatia           36.63%|    +--------------------------+                                                                                                
-+--------------------------+    |  Portugal          35.60%|                                                                                                
-R32*                            |> Spain             64.40%|                                                                                                
+|> Portugal          60.96%|    R16*                                                                                                                        
+|  Croatia           39.04%|    +--------------------------+                                                                                                
++--------------------------+    |  Portugal          31.05%|                                                                                                
+R32*                            |> Spain             68.95%|                                                                                                
 +--------------------------+    +--------------------------+                                                                                                
-|> Spain             85.04%|                                    QF                                                                                          
-|  Austria           14.96%|                                    +--------------------------+                                                                
-+--------------------------+                                    |> Spain             68.91%|                                                                
-R32*                                                            |  Belgium           31.09%|                                                                
+|> Spain             86.30%|                                    QF                                                                                          
+|  Austria           13.70%|                                    +--------------------------+                                                                
++--------------------------+                                    |> Spain             71.06%|                                                                
+R32*                                                            |  Belgium           28.94%|                                                                
 +--------------------------+                                    +--------------------------+                                                                
 |> United States     82.93%|    R16                                                                                                                         
 |  Bosnia and Herz.  17.07%|    +--------------------------+                                                                                                
@@ -267,8 +267,8 @@ R32*                            |> Colombia          54.03%|
 
 Third place
 +--------------------------+
-|> Spain             53.00%|
-|  England           47.00%|
+|> Spain             55.54%|
+|  England           44.46%|
 +--------------------------+
 
 Champion: France
